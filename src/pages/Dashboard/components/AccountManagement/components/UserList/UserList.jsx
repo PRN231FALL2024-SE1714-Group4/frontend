@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Button, Modal, Form, Input, message, Space, DatePicker, Select } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchUsers } from "../../../../../../core/store/slices/userSlice";
-import { updateUser, banUser, getRoles, addUser } from "../../../../../../services/api/UserApi";
-import { getRole } from "../../../../../../services/api/RoleApi";
+import { updateUser, banUser, addUser, getRoles } from "../../../../../../services/api/UserApi";
 import TotalUsers from "./totalUsers";
 import dayjs from "dayjs";
 
@@ -19,21 +18,21 @@ const UserManagement = () => {
 
     useEffect(() => {
         dispatch(fetchUsers());
-        // fetchRoles();
+        fetchRoles();
     }, [dispatch]);
 
     useEffect(() => {
         console.log("User Data:", userData);
     }, [userData]);
 
-    // const fetchRoles = async () => {
-    //     try {
-    //         const response = await getRole();
-    //         setRolesData(response);
-    //     } catch (error) {
-    //         message.error("Failed to fetch roles data.");
-    //     }
-    // };
+    const fetchRoles = async () => {
+        try {
+            const response = await getRoles();
+            setRolesData(response);
+        } catch (error) {
+            message.error("Failed to fetch roles data.");
+        }
+    };
 
     const columns = [
         // {

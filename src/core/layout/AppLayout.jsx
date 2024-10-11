@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import AppHeader from "./AppHeader";
 import { useSelector } from "react-redux"; // Import useSelector để lấy thông tin người dùng
+import ReportManagement from "../../pages/Dashboard/components/ReportManagement/Report";
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -85,7 +86,7 @@ export const AppLayout = ({ components }) => {
 
         // Điều kiện hóa việc hiển thị mục AccountManagement dựa trên vai trò người dùng
         const items = [
-            ...(role === "admin"
+            ...(role === "ADMIN"
                 ? [
                       // Chỉ thêm mục này nếu người dùng là Admin
                       getItem("AccountManagement", "sub1", <UserOutlined />, [
@@ -97,6 +98,7 @@ export const AppLayout = ({ components }) => {
                           //   getItem("Total Manager", "6", <Link to="/totalManagers"></Link>),
                         //   getItem("Shipper", "4", <Link to="/shippers"></Link>),
                       ]),
+                    
                   ]
                 : []), // Nếu không phải Admin thì không thêm gì vào đây
             
@@ -116,6 +118,15 @@ export const AppLayout = ({ components }) => {
                 icon: <ShoppingOutlined />,
                 label: <Link to="/works">Work Management</Link>,
             },
+            ...(role === "ADMIN"
+                ? [
+                    {
+                        key: "7",
+                        icon: <ShoppingOutlined />,
+                        label: <Link to="/reports">Report Management</Link>,
+                    },
+                ]
+                : []), // Nếu role là ADMIN thì thêm mục Report Management
            
         ];
 

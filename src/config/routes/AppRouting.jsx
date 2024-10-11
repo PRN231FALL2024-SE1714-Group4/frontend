@@ -14,6 +14,8 @@ import ManagerManagement from "../../pages/Dashboard/components/AccountManagemen
 import AreaManagement from "../../pages/Dashboard/components/AreaManagement/area";
 import CageManagement from "../../pages/Dashboard/components/CageManagement/Cage";
 import WorkManagement from "../../pages/Dashboard/components/WorkManagement/work";
+import ReportManagement from "../../pages/Dashboard/components/ReportManagement/Report";
+import ReportDetail from "../../pages/Dashboard/components/WorkManagement/reportDetail";
 
 
 
@@ -30,7 +32,12 @@ const AppRouting = () => {
                 <Route path="managers" element={<ManagerManagement />} />
                 <Route path="areas" element={<AreaManagement />} />
                 <Route path="cages" element={<CageManagement />} />
-                <Route path="works" element={<WorkManagement />} />
+                <Route>
+                     <Route path="works" element={<WorkManagement />} />
+                     <Route path="report-detail/:workId" element={<ReportDetail />} />
+                </Route>
+           
+                <Route path="reports" element={<ReportManagement />} />
             </Route>
         </Routes>
     );

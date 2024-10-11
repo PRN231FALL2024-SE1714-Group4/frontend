@@ -1,30 +1,50 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm } from "antd";
+import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm, DatePicker, Tag } from "antd";
 import moment from "moment";
 
-import { addWork,getWork } from "../../../../services/api/WorkApi";
-import {  getCage } from '/src/services/api/CageApi.js';
+import { addWork,deleteWork,getMyAssignedTask,getMyWork,getWork, updateWork } from "../../../../services/api/WorkApi";
+import {  getCage } from "../../../../services/api/CageApi";
 import { getAllUsers } from "../../../../services/api/UserApi";
-
+import TextArea from "antd/es/input/TextArea";
+import { useSelector } from "react-redux";
+import { addReport, getReport, updateReport } from "../../../../services/api/ReportApi";
+import { Link } from "react-router-dom";
 const { Option } = Select;
 
 const WorkManagement = () => {
     const [users, setUsers] = useState([]);
     const [works, setWorks] = useState([]);
+    const [myWorks, setMyWorks] = useState([]);
+    const [myAssignedTask, setMyAssignedWorks] = useState([]);
+    const [reports, setReports] = useState([]);
     const [cages, setCages] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingWork, setEditingWork] = useState(null);
-    const [form] = Form.useForm();
+    const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+const [editingReport, setEditingReport] = useState(null);
 
+    const [form] = Form.useForm();
+    const role = useSelector((state) => state.auth.role);
+    const dataSource = role === "STAFF"
+    ? myWorks
+    : role === "MANAGER"
+    ? myAssignedTask
+    : works;
     useEffect(() => {
         fetchWorks();
         fetchCages();
         fetchUsers();
+        if(role === "STAFF") {
+            fetchMyWorks();
+        } else if (role === "MANAGER") {
+            fetchMyAssignedTask();
+        }
     }, []);
   const fetchUsers = async () => {
         try {
             const response = await getAllUsers();
-            setUsers(response);
+            const filteredUsers = response.filter(user => user.role.name === "STAFF");
+            setUsers(filteredUsers);
         } catch (error) {
             message.error("Failed to fetch users data.");
         }
@@ -37,11 +57,34 @@ const WorkManagement = () => {
             message.error("Failed to fetch Cages data.");
         }
     };
-
+    const fetchMyWorks = async () => {
+        try {
+            const response = await getMyWork ();
+            setMyWorks(response); 
+        } catch (error) {
+            message.error("Failed to fetch Cages data.");
+        }
+    };
+    const fetchMyAssignedTask = async () => {
+        try {
+            const response = await getMyAssignedTask ();
+            setMyAssignedWorks(response); 
+        } catch (error) {
+            message.error("Failed to fetch Cages data.");
+        }
+    };
     const fetchWorks = async () => {
         try {
             const response = await getWork ();
             setWorks(response); 
+        } catch (error) {
+            message.error("Failed to fetch Cages data.");
+        }
+    };
+    const fetchReports = async () => {
+        try {
+            const response = await getReport();
+            setReports(response); 
         } catch (error) {
             message.error("Failed to fetch Cages data.");
         }
@@ -57,54 +100,113 @@ const WorkManagement = () => {
         setIsModalVisible(true);
         form.setFieldsValue({
             ...record,
-            createdDate: record.createdDate ? new Date(record.createdDate) : null,
-            updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
+            startDate: record.startDate ? moment(record.startDate) : null,
+            endDate: record.endDate ? moment(record.endDate) : null,
+            assigneeID: record.assignee?.userID,  // Set assignee by ID
+            cageId: record.cage?.cageID,  // Set cage by ID
+            mission: record.mission,  // Assuming it's stored as a string or number
+            shift: record.shift,  // Set shift value
+            description: record.description  // Set description value
         });
     };
 
     const handleDelete = async (id) => {
         try {
-            await deleteCage(id);
-            setWorks(works.filter((item) => item.cageID !== id));
-            message.success("Cage deleted successfully.");
-        } catch (error) {
-            message.error("Failed to delete Cage.");
+            await deleteWork(id);
+            setWorks(works.filter((item) => item.workId !== id));
+            message.success("Work deleted successfully.");
+        } catch (error) {   
+            message.error("Failed to delete Work.");
         }
+        
     };
 
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
             console.log(values);
-            const { cageName, areaID } = values;  // Sử dụng cageName và areaID từ form values
-
+            const {cageId, description,startDate,endDate,shift,assigneeID,mission,status } = values;  // Sử dụng cageName và areaID từ form values
+         
             if (editingWork) {
                 // Update existing Cage
-                await updateWork(editingWork.cageID, cageName, areaID );
-                const updatedCages = works.map((item) =>
-                    item.cageID === editingWork.cageID ? { ...item, cageName, areaID } : item
+                await updateWork(editingWork.workId, description,startDate,endDate,shift,assigneeID,mission,status );
+                const updatedWorks = works.map((item) =>
+                    item.workId === editingWork.workId ? {  description,startDate,endDate,shift,assigneeID,mission,status , ...item, } : item
                 );
-                setWorks(updatedCages);
-                message.success("Cage updated successfully.");
+                setWorks(updatedWorks);
+                message.success("Work updated successfully.");
             } else {
                 // Create new Cage
-                const newCage = await addWork(cageId, description,startDate,endDate,shift,assigneeID,mission );
-                setWorks([newCage, ...works]);
-                message.success("Cage added successfully.");
+                const newWork = await addWork(cageId, description,startDate,endDate,shift,assigneeID,mission );
+                setWorks([newWork, ...works]);
+                message.success("Work added successfully.");
             }
             setIsModalVisible(false);
             form.resetFields();
             fetchWorks();
+            fetchMyAssignedTask();
         } catch (error) {
             message.error("Validation failed: " + error.message);
         }
     };
-
+    const handleOkReport = async () => {
+        try {
+            const values = await form.validateFields();
+            console.log(values);
+            const { workId, description, healthDescription } = values;
+    
+            if (editingReport) {
+                // Update existing Report
+                await updateReport(editingReport.workId, description, healthDescription);
+                const updatedReports = reports.map((item) =>
+                    item.workId === editingReport.workId ? { ...item, description, healthDescription } : item
+                );
+                setReports(updatedReports);
+                message.success("Report updated successfully.");
+            } else {
+                // Create new Report
+                const newReport = await addReport(workId, description, healthDescription);
+                setReports([newReport, ...reports]);
+    
+                // Update work to indicate that a report has been written
+                const updatedWorks = works.map((work) =>
+                    work.workId === workId ? { ...work, hasReport: true } : work
+                );
+                setWorks(updatedWorks);
+    
+                message.success("Report added successfully.");
+            }
+    
+            setIsReportModalVisible(false);
+            form.resetFields();
+            fetchReports();
+        } catch (error) {
+            message.error("Validation failed: " + error.message);
+        }
+    };
+    
     const handleCancel = () => {
         setIsModalVisible(false);
         form.resetFields();
     };
 
+    const handleWriteReport = (record) => {
+        setEditingReport(null);
+        setIsReportModalVisible(true);
+        form.setFieldsValue( {workId: record.workId} ); // Set the selected workId in the form
+        console.log("check workId", workId);
+    };
+    
+    
+    const handleEditReport = (record) => {
+        setEditingReport(record);
+        setIsReportModalVisible(true);
+        form.setFieldsValue({
+            mission: record.mission,
+            description: record.report?.description || "",
+            healthDescription: record.report?.healthDescription || ""
+        });
+    };
     const columns = [
         {
             title: "No",
@@ -115,74 +217,139 @@ const WorkManagement = () => {
             title: "Mission",
             dataIndex: "mission",
             key: "mission",
+            render: (text, record) => (
+                <Link to={`/report-detail/${record.workId}`}>
+                     <Tag color="blue">{text}</Tag>             
+                </Link>
+                   ),
         },
         {
             title: "Shift",
             dataIndex: "shift",
             key: "shift",
+            render: (shift) => (
+                <Tag bordered={true} color="green">
+                    {shift}
+                </Tag>
+            ),
         },
         {
             title: "Cage",
             dataIndex: ["cage","cageName"],
             key: "cage",
+            render: (cage) => (
+                <Tag bordered={true} color="error">
+                    {cage}
+                </Tag>
+            ),
         },
         {
             title: "Area",
             dataIndex: ["area","name"],
             key: "area",
+            render: (area) => (
+                <Tag bordered={true} color="warning">
+                    {area}
+                </Tag>
+            ),
         },
         {
             title: "Start Date",
             dataIndex: "startDate",
             key: "startDate",
-            render: (text) => moment(text).format("YYYY-MM-DD"),
+            render: (text) =>  
+             <Tag bordered={false} color="orange">
+                 {moment(text).format("YYYY-MM-DD HH:mm")}
+             </Tag>
         },
+        
         {
             title: "End Date",
             dataIndex: "endDate",
             key: "endDate",
-            render: (text) => moment(text).format("YYYY-MM-DD"),
+            render: (text) => 
+            <Tag bordered={false} color="gold">
+                  {moment(text).format("YYYY-MM-DD HH:mm")}
+            </Tag> ,
         },
         {
             title: "Assigner",
             dataIndex: ["assigner","fullName"],
             key: "assigner",
+            render: (assigner) => (
+                <Tag bordered={true} color="volcano">
+                    {assigner}
+                </Tag>
+            ),
         },
         {
             title: "Assignee",
             dataIndex: ["assignee","fullName"],
             key: "assignee",
+            render: (assignee) => (
+                <Tag bordered={true} color="purple">
+                    {assignee}
+                </Tag>
+            ),
         },        
-        
+        {
+            title: "Status",
+            dataIndex: ["status"],
+            key: "status",
+            render: (status) => (
+                <Tag bordered={true} color="cyan">
+                    {status}
+                </Tag>
+            ),
+        },
         {
             title: "Action",
             key: "action",
-            render: (_, record) => (
+            render: (_, record) => (                
                 <Space size="middle">
+               {role === "STAFF" && (
+                    <>
+                        {record.hasReport ? (
+                            <Button type="primary" onClick={() => handleEditReport(record)}>Edit Report</Button>
+                        ) : (
+                            <Button 
+                            color="primary" variant="outlined"
+                                onClick={() => handleWriteReport(record)}>
+                                Write Report
+                            </Button>
+                        )}
+                    </>
+                )}
+                    {role !== "STAFF" && (
                     <Button type="primary" onClick={() => handleEdit(record)}>
                         Edit
                     </Button>
+                       )}
                     <Popconfirm
                         title="Are you sure to delete this work?"
-                        onConfirm={() => handleDelete(record.cageID)}
+                        onConfirm={() => handleDelete(record.workId)}
                         okText="Yes"
                         cancelText="No"
                     >
+                          {role !== "STAFF" && (
                         <Button type="primary" danger>
                             Delete
                         </Button>
+                           )}
                     </Popconfirm>
                 </Space>
             ),
         },
     ];
-
+   
     return (
         <div>
             <Space style={{ margin: 15 }}>
-                <Button type="primary" onClick={handleAdd}>
-                    Add Work
-                </Button>
+            {role !== "STAFF" && (
+                    <Button type="primary" onClick={handleAdd}>
+                        Add Work
+                    </Button>
+                )}
             </Space>
 
             <Modal
@@ -199,22 +366,48 @@ const WorkManagement = () => {
                     >
                         <Select placeholder = "Select a mission"
                         >
-                            <Option value={0}> FEED</Option>
-                            <Option value={1}> CLEAN_CAGE</Option>
-                            <Option value={2}> ANIMAL_MOVE</Option>
-                            <Option value={4}> OTHER</Option>
+                            <Option value='FEED'> FEED</Option>
+                            <Option value='CLEAN_CAGE'> CLEAN_CAGE</Option>
+                            <Option value='ANIMAL_MOVE'> ANIMAL_MOVE</Option>
+                            <Option value='OTHER'> OTHER</Option>
                         </Select>
 
                     </Form.Item>
                     <Form.Item
-                        name="cageName"  // Sử dụng tên trường đúng là cageName
-                        label="Cage Name"
-                        rules={[{ required: true, message: "Please input the Cage Name!" }]}
+                        name="assigneeID"
+                        label="Assignee Name"
+                        rules={[{ required: true, message: "Please select an assignee!" }]}
                     >
-                        <Input />
+                        <Select placeholder="Select an assignee">
+                            {users.map((user) => (
+                                <Option key={user.userID} value={user.userID}>
+                                    {user.fullName}
+                                </Option>
+                            ))}
+                        </Select>
                     </Form.Item>
                     <Form.Item
-                        name="cageID"
+                    name = "startDate"
+                    label = "Start Date"
+                    >
+                        <DatePicker/>
+                    </Form.Item>
+                    <Form.Item
+                    name = "endDate"
+                    label = "End Date"
+                    >
+                        <DatePicker/>
+                    </Form.Item>
+                    <Form.Item
+                        name="description"  // Sử dụng tên trường đúng là cageName
+                        label="Description "  
+                        rules={[{ required: true, message: "Please input a description!" }]}    
+                    >
+                        <TextArea/>
+                    </Form.Item>
+                
+                    <Form.Item
+                        name="cageId"
                         label="Cage Name"
                         rules={[{ required: true, message: "Please select a cage name!" }]}
                     >
@@ -233,13 +426,12 @@ const WorkManagement = () => {
                     >
                         <Select placeholder = "Select a Shift"
                         >
-                            <Option > SHIFT_ONE</Option>
-                            <Option > SHIFT_TWO</Option>
-                            <Option > SHIFT_THREE</Option>
-                          
+                            <Option value='SHIFT_ONE'> SHIFT_ONE</Option>
+                            <Option value='SHIFT_TWO'> SHIFT_TWO</Option>
+                            <Option value='SHIFT_THREE'> SHIFT_THREE</Option>                         
                         </Select>
-
                     </Form.Item>
+                    {editingWork && (
                     <Form.Item
                         name = "status"
                         label="Status"
@@ -247,18 +439,53 @@ const WorkManagement = () => {
                     >
                         <Select placeholder = "Select a Status"
                         >
-                            <Option value={0}> OPEN</Option>
-                            <Option value={1}> IN_PROGRESS</Option>
-                            <Option value={2}> DONE</Option>
-                            <Option value={3}> CLOSED</Option>
-                          
-                        </Select>
-                        assigneeID
+                            <Option value='OPEN'> OPEN</Option>
+                            <Option value='IN_PROGRESS'> IN_PROGRESS</Option>
+                            <Option value='DONE'> DONE</Option>
+                            <Option value='CLOSED'> CLOSED</Option>                         
+                        </Select>              
                     </Form.Item>
+                      )}
                 </Form>
             </Modal>
-
-            <Table dataSource={works} columns={columns} rowKey="cageID" pagination={{ pageSize: 7 }} />
+            <Modal
+    title={editingReport ? "Edit Report" : "Write Report"}
+    visible={isReportModalVisible}
+    onOk={handleOkReport}
+    onCancel={() => setIsReportModalVisible(false)}
+>
+    <Form form={form} layout="vertical">
+        <Form.Item
+            name="workId"
+            label="Work Name"
+            rules={[{ required: true, message: "Please select a work!" }]}
+            hidden 
+        >
+            <Select placeholder="Select a work">
+                {myWorks.map((work) => (
+                    <Option key={work.workId} value={work.workId}>
+                        {work.name}
+                    </Option>
+                ))}
+            </Select>
+        </Form.Item>
+        <Form.Item
+            name="description"
+            label="Description"
+            rules={[{ required: true, message: "Please input the description!" }]}
+        >
+            <TextArea />
+        </Form.Item>
+        <Form.Item
+            name="healthDescription"
+            label="Health Description"
+            rules={[{ required: true, message: "Please input the health description!" }]}
+        >
+            <TextArea />
+        </Form.Item>
+    </Form>
+</Modal>
+            <Table dataSource={dataSource} columns={columns} rowKey="workId" pagination={{ pageSize: 10 }} />
         </div>
     );
 };

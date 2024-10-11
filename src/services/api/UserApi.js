@@ -11,7 +11,7 @@ export const getAllUsers = async () => {
 };
 export const getRoles = async () => {
     try {
-        const response = await api.get(`account/roles `);
+        const response = await api.get(`Role `);
         return response.data;
     } catch (error) {
         console.error("Error fetching users:", error);
