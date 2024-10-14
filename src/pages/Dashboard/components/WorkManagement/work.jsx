@@ -62,7 +62,7 @@ const [editingReport, setEditingReport] = useState(null);
             const response = await getMyWork ();
             setMyWorks(response); 
         } catch (error) {
-            message.error("Failed to fetch Cages data.");
+            message.error("Failed to fetch Works data.");
         }
     };
     const fetchMyAssignedTask = async () => {
@@ -70,7 +70,7 @@ const [editingReport, setEditingReport] = useState(null);
             const response = await getMyAssignedTask ();
             setMyAssignedWorks(response); 
         } catch (error) {
-            message.error("Failed to fetch Cages data.");
+            message.error("Failed to fetch MyTask data.");
         }
     };
     const fetchWorks = async () => {
@@ -78,7 +78,7 @@ const [editingReport, setEditingReport] = useState(null);
             const response = await getWork ();
             setWorks(response); 
         } catch (error) {
-            message.error("Failed to fetch Cages data.");
+            message.error("Failed to fetch Works data.");
         }
     };
     const fetchReports = async () => {
@@ -86,7 +86,7 @@ const [editingReport, setEditingReport] = useState(null);
             const response = await getReport();
             setReports(response); 
         } catch (error) {
-            message.error("Failed to fetch Cages data.");
+            message.error("Failed to fetch Reports data.");
         }
     };
 

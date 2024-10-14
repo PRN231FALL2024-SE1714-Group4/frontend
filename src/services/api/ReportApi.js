@@ -10,10 +10,10 @@ export const getReport = async () => {
     }
 };
 
-export const updateReport= async (id, description, healthDescription) => {
+export const updateReport= async (id, description, healthDescription,workStatus) => {
     try {
         const response = await api.put(`Report/${id}`, {
-            description, healthDescription
+            description, healthDescription, workStatus
         });
         return response.data;
     } catch (error) {

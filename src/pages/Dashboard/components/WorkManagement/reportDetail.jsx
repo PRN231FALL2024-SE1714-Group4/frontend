@@ -48,19 +48,19 @@ const ReportDetail = () => {
     const handleEdit = (record) => {
         setEditingCage(record);
         setIsModalVisible(true);
-        form.setFieldsValue( {reportID: record.reportID, description: record.description, healthDescription: record.healthDescription} ); // Set the selected workId in the form
+        form.setFieldsValue( {reportID: record.reportID, description: record.description, healthDescription: record.healthDescription, workStatus: record.workStatus} ); // Set the selected workId in the form
     };
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
             console.log(values);
-            const { reportID,description, healthDescription } = values;  // Sử dụng cageName và areaID từ form values
+            const { reportID,description, healthDescription,workStatus } = values;  // Sử dụng cageName và areaID từ form values
 
             if (editingReport) {
                 // Update existing Report
-                await updateReport(editingReport.reportID, description, healthDescription );
+                await updateReport(editingReport.reportID, description, healthDescription,workStatus);
                 const updatedReports = reports.map((item) =>
-                    item.reportID === editingReport.reportID ? { ...item, description, healthDescription } : item
+                    item.reportID === editingReport.reportID ? { ...item, description, healthDescription ,workStatus} : item
                 );
                 setReports(updatedReports);
                 message.success("Report updated successfully.");
@@ -186,7 +186,20 @@ const ReportDetail = () => {
                     >
                    <TextArea/>
                     </Form.Item>
-                    
+                    <Form.Item
+                            name="work"
+                            label="Work Status"
+                            rules={[{ required: true, message: "Please select a workStatus!" }]}
+                          
+                    >
+                         
+                        <Select placeholder="Select an status">
+                         <Option value='OPEN'> OPEN</Option>
+                            <Option value='IN_PROGRESS'> IN_PROGRESS</Option>
+                            <Option value='DONE'> DONE</Option>  
+                            <Option value='CLOSED'> CLOSED</Option>                             
+                        </Select>
+                    </Form.Item>
                 </Form>
 
             </Modal>

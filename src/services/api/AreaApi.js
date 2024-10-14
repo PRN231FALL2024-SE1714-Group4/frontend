@@ -1,9 +1,10 @@
 import axios from "axios";
+import api from "../../config/axios";
 
-const API_BASE_URL = "https://localhost:7017";
+
 const getArea = async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/api/Area`);
+        const response = await api.get(`Area`);
         return response.data;
     } catch (error) {
         // Handle error
@@ -14,7 +15,7 @@ const getArea = async () => {
 
 const createArea = async (name) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/api/Area`, {
+        const response = await api.post(`Area`, {
             name,
         });
         return response.data;
@@ -26,7 +27,7 @@ const createArea = async (name) => {
 };
 const deleteArea = async (id) => {
     try {
-        const response = await axios.delete(`${API_BASE_URL}/api/Area/${id}`);
+        const response = await api.delete(`Area/${id}`);
         return response.data;
     } catch (error) {
         // Handle error
@@ -36,7 +37,7 @@ const deleteArea = async (id) => {
 };
 const updateArea = async (id, name) => {
     try {
-        const response = await axios.put(`${API_BASE_URL}/api/Area/${id}`, {
+        const response = await api.put(`Area/${id}`, {
             name,
         });
         return response.data;
@@ -49,7 +50,7 @@ const updateArea = async (id, name) => {
 
 const getAreaById = async (id) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/api/Area/${id}`);
+        const response = await api.get(`Area/${id}`);
         return response.data;
     } catch (error) {
         // Handle error

@@ -1,10 +1,10 @@
-import axios from "axios";
+import api from "../../config/axios";
 
-const API_BASE_URL = "https://localhost:7017";
-const API_CAGE_URL = API_BASE_URL + "/api/Cage";
+
+
 const getCage = async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/api/Cage`);
+        const response = await api.get(`Cage`);
         return response.data;
     } catch (error) {
         // Handle error
@@ -15,7 +15,7 @@ const getCage = async () => {
 
 const createCage  = async (cageName,areaID) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/api/Cage`, {
+        const response = await api.post(`Cage`, {
             cageName,areaID
         });
         return response.data;
@@ -27,7 +27,7 @@ const createCage  = async (cageName,areaID) => {
 };
 const deleteCage  = async (id) => {
     try {
-        const response = await axios.delete(`${API_BASE_URL}/api/Cage/${id}`);
+        const response = await api.delete(`Cage/${id}`);
         return response.data;
     } catch (error) {
         // Handle error
@@ -37,7 +37,7 @@ const deleteCage  = async (id) => {
 };
 const updateCage  = async (id, cageName,areaID) => {
     try {
-        const response = await axios.put(`${API_BASE_URL}/api/Cage/${id}`, {
+        const response = await api.put(`Cage/${id}`, {
             cageName, areaID
         });
         return response.data;
@@ -50,7 +50,7 @@ const updateCage  = async (id, cageName,areaID) => {
 
 const getCageById = async (id) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/api/Cage/${id}`);
+        const response = await api.get(`Cage/${id}`);
         return response.data;
     } catch (error) {
         // Handle error
