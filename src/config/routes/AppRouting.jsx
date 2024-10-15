@@ -16,6 +16,7 @@ import CageManagement from "../../pages/Dashboard/components/CageManagement/Cage
 import WorkManagement from "../../pages/Dashboard/components/WorkManagement/work";
 import ReportManagement from "../../pages/Dashboard/components/ReportManagement/Report";
 import ReportDetail from "../../pages/Dashboard/components/WorkManagement/reportDetail";
+import ShiftManagement from "../../pages/Dashboard/components/ShiftManagement/shift";
 
 
 
@@ -38,6 +39,7 @@ const AppRouting = () => {
                 </Route>
            
                 <Route path="reports" element={<ReportManagement />} />
+                <Route path="shifts" element={<ShiftManagement />} />
             </Route>
         </Routes>
     );

@@ -30,8 +30,8 @@ const AppHeader = () => {
         </Menu>
     );
 
-    const getInitials = (name) => {
-        return name
+    const getInitials = (fullName) => {
+        return fullName
             .split(" ")
             .map((word) => word[0])
             .join("");

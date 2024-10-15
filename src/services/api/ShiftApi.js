@@ -2,9 +2,14 @@
 import api from "../../config/axios";
 
 
-const getWorkerInShift = async () => {
+const getWorkerInShift = async (fromDate,toDate) => {
     try {
-        const response = await api.get(`UserShift/workers-in-shift`);
+        const response = await api.get(`UserShift/workers-in-shift`, {
+            params: {
+                fromDate: fromDate,
+                toDate: toDate 
+            }
+        });
         return response.data;
     } catch (error) {
         // Handle error
@@ -12,9 +17,28 @@ const getWorkerInShift = async () => {
         throw error;
     }
 };
+const getMyShift = async (fromDate,toDate) => { 
+    try { 
+        const response = await api.get(`UserShift/me`, {
+            params: {
+                fromDate: fromDate,
+                toDate: toDate 
+            }
+        }); 
+        return response.data;
+    }catch (error) {
+        console.error(error); 
+        throw error;
+    }
+}
 const getAvailableUsers = async () => {
     try {
-        const response = await api.get(`UserShift/available-users`);
+        const response = await api.get(`UserShift/available-users`, {
+            params: {
+                fromDate: fromDate,
+                toDate: toDate 
+            }
+        });
         return response.data;
     } catch (error) {
         // Handle error
@@ -24,7 +48,7 @@ const getAvailableUsers = async () => {
 };
 const registerShift = async (data) => {
     try {
-        const response = await api.post(`UserShift`, {data});
+        const response = await api.post(`UserShift`, data);
         return response.data;
     } catch (error) {
         // Handle error
@@ -33,7 +57,7 @@ const registerShift = async (data) => {
     }
 };
 
-export { registerShift, getWorkerInShift,getAvailableUsers };
+export { registerShift, getWorkerInShift,getAvailableUsers,getMyShift};
 
 
 

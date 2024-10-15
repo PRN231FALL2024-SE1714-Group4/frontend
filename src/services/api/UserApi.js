@@ -9,6 +9,15 @@ export const getAllUsers = async () => {
         throw error;
     }
 };
+export const getMe = async () => {
+    try {
+        const response = await api.get(`User/me `);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        throw error;
+    }
+};
 export const getRoles = async () => {
     try {
         const response = await api.get(`Role `);

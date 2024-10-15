@@ -1,200 +1,246 @@
-import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from "antd";
-import moment from "moment";
 
-import {  } from '/src/services/api/ShiftApi.js';
-import { getAvailableUsers, getWorkerInShift } from "../../../../services/api/ShiftApi";
+import React, { useEffect, useState } from "react";
+import { Alert, Calendar, List, Button, Space, Checkbox, message, DatePicker, Modal, Badge } from "antd";
+import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import { getAvailableUsers, getMyShift, getWorkerInShift, registerShift } from "../../../../services/api/ShiftApi";
 import { useSelector } from "react-redux";
-const AreaManagement = () => {
-    const [workerInShifts, setWorkerInShifts] = useState([]);
-    const [availableUsers, setAvailableUsers] = useState([]);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [editingShift, setEditingShift] = useState(null);
-    const [form] = Form.useForm();
 
-    const role = useSelector((state) => state.auth.role);
-    // const dataSource = role === "STAFF"
-    // ? myWorks
-    // : role === "MANAGER"
-    // ? myAssignedTask
-    // : works;
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
-    useEffect(() => {
-        if(role === "MANAGER") { 
-            fetchWorkerInShift();
-        }
-      else{
-        fetchAvailableUsers();
-      }
-      
-    }, []);
+const ShiftManagement = () => {
+  const [workerInShifts, setWorkerInShifts] = useState([]);
+  const [availableWorker, setAvailableWorker] = useState([]);
+  const [myShift, setMyShift] = useState([]);
+  
+  const [value, setValue] = useState(dayjs());
+  const [selectedValue, setSelectedValue] = useState(dayjs());
+  const [selectedWorkShift, setSelectedWorkShift] = useState(""); 
+  const [isModalVisible, setIsModalVisible] = useState(false);  
+  const [startDate, setStartDate] = useState(null);  
+  const [endDate, setEndDate] = useState(null);  
 
-    const fetchWorkerInShift = async () => {
-        try {
-            // Fetch workerInShifts data from API
-            const response = await getWorkerInShift();
-            const data = response; // Extract data from response
-            setWorkerInShifts(data); // Set workerInShifts data into state
-          
-        } catch (error) {
-            message.error("Failed to fetch workerInShifts data.");
-        }
-    };
-    const fetchAvailableUsers = async () => {
-        try {
-   
-            const response = await getAvailableUsers();
-            const data = response; // Extract data from response
-            setWorkerInShifts(data); // Set workerInShifts data into state
-          
-        } catch (error) {
-            message.error("Failed to fetch workerInShifts data.");
-        }
-    };
-    const handleAdd = () => {
-        setEditingShift(null);
-        setIsModalVisible(true);
-    };
+  const role = useSelector((state) => state.auth.role);
+  // const dataSource = role === "STAFF" ? workerInShifts : availableWorker;
 
-    const handleEdit = (record) => {
-        setEditingShift(record);
-        setIsModalVisible(true);
-        form.setFieldsValue({
-            ...record,
-            // createdDate: record.createdDate ? new Date(record.createdDate) : null,
-            // updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
-        });
-    };
 
-    const handleDelete = async (id) => {
-        try {
-            // Delete area by id from API (implement deleteArea function)
-            await deleteArea(id);
-            setWorkerInShifts(workerInShifts.filter((item) => item.areaID !== id));
-            message.success("Area deleted successfully.");
-        } catch (error) {
-            message.error("Failed to delete area.");
-        }
-    };
+  useEffect(() => {
+    const startOfWeek = dayjs().startOf('week'); // Gets the Monday of the current week
+    const endOfWeek = dayjs().endOf('week'); // Gets the Sunday of the current week
 
-    const handleOk = async () => {
-        try {
-            const values = await form.validateFields();
-            const name = values.name;
-    
-            if (!name || typeof name !== 'string') {
-                message.error("Invalid name. Please input a valid string.");
-                return;
-            }
-    
-            if (editingShift) {
-                // Update existing area
-                await updateArea(editingShift.areaID, name);
-                const updatedAreas = workerInShifts.map((item) =>
-                    item.areaID === editingShift.areaID ? { ...item, name } : item
-                );
-                setWorkerInShifts(updatedAreas);
-                message.success("Area updated successfully.");
-            } else {
-                // Create new area
-                const newArea = await createArea(name);
-    
-                // Kiểm tra nếu workerInShifts là một mảng
-                if (Array.isArray(workerInShifts)) {
-                    setWorkerInShifts([newArea, ...workerInShifts]);
-                } else {
-                    setWorkerInShifts([newArea]); // Nếu không, khởi tạo mảng mới
-                }
-                message.success("Area added successfully.");
-            }
-            setIsModalVisible(false);
-            form.resetFields();
-            fetchWorkerInShift(); // Cập nhật dữ liệu sau khi thêm
-        } catch (error) {
-            message.error("Validation failed: " + error.message);
-        }
-    };
-    
+    setStartDate(startOfWeek);
+    setEndDate(endOfWeek);
 
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        form.resetFields();
-    };
+    fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
+  }, []);
+  const fetchAvailAbleWorker = async () => { 
+    try { 
+      const response = await getAvailableUsers(); 
+      setAvailableWorker(response); 
+    } catch (error) { 
+      message.error("Failed to fetch available worker data");
+    }
+  };
 
-    const columns = [
-        {
-            title: "No",
-            // dataIndex: "index", // Sử dụng thuộc tính "name" từ dữ liệu trả về
-            key: "id",
-            render: (text, record, index) => index + 1, // Hiển thị số thứ tự dựa trên index
-        },
-        {
-            title: "Area Name",
-            dataIndex: "name", // Sử dụng thuộc tính "name" từ dữ liệu trả về
-            key: "name",
-        },
-        {
-            title: "Created Date",
-            dataIndex: "createdDate",
-            key: "createdDate",
-            render: (text) => moment(text).format("YYYY-MM-DD"),
-        },
-         {
-            title: "Action",
-            key: "action",
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button type="primary" onClick={() => handleEdit(record)}>
-                        Edit
-                    </Button>
-                   
-                    <Popconfirm
-                        title="Are you sure to delete this cage?"
-                        onConfirm={() => handleDelete(record.areaID)}
-                        okText="Yes"
-                        cancelText="No"
-                    >
-                        <Button type="primary" danger>
-                            Delete
-                        </Button>
-                    </Popconfirm>
-                </Space>
-            ),
-        },
-    ];
+  const fetchMyShift = async (start, end) => {
+    try {
+      const response = await getMyShift(start, end);
+      setMyShift(response);
+    } catch (error) {
+      message.error("No shifts found for the specified date range.");
+    }
+  };
 
-    return (
-        <div>
-                <Space style={{ margin: 15 }}>
-                    <Button type="primary" onClick={handleAdd}>
-                        Add Areas
-                    </Button>
-                </Space>
-            
-                <Modal
-                    title={editingShift ? "Edit Area" : "Add Area"}
-                    visible={isModalVisible}
-                    onOk={handleOk}
-                    onCancel={handleCancel}
-                >
-                    <Form form={form} layout="vertical">
-                        <Form.Item
-                            name="name"
-                            label="Name"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: "Please input the name!",
-                                },
-                            ]}
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-               <Table dataSource={workerInShifts} columns={columns} rowKey="areaID" pagination={{ pageSize: 7 }} />
-        </div>
-    );
+  const fetchWorkerInShift = async (startDate, endDate) => {
+    try {
+        const response = await getWorkerInShift(startDate, endDate); // Pass the start and end dates
+        setWorkerInShifts(response);
+    } catch (error) {
+        message.error("Failed to fetch worker in shift data.");
+    }
 };
 
-export default AreaManagement;
+  const onSelect = async (newValue) => {
+    setValue(newValue);
+    setSelectedValue(newValue);
+    const startDate = newValue.format('YYYY-MM-DD');
+    const endDate = newValue.format('YYYY-MM-DD');
+
+    // Fetch worker shifts for the selected date
+    await fetchWorkerInShift(startDate, endDate); // Call API to fetch workers in shifts
+  };
+
+  const onCheckboxChange = (workShift) => {
+    setSelectedWorkShift(prevShift => (prevShift === workShift ? "" : workShift));
+  };
+
+  const handleRegisterShift = async () => {
+    if (!selectedWorkShift) {
+      message.warning("Please select a shift to register.");
+      return;
+    }
+
+    const data = [{
+      workShift: selectedWorkShift,
+      startDate: selectedValue.format('YYYY-MM-DD'),
+      endDate: selectedValue.format('YYYY-MM-DD'),
+    }];
+    
+    try {
+      await registerShift(data);
+      message.success("Shift registered successfully.");
+       // Update workerInShifts state
+       setWorkerInShifts(prevShifts =>
+        prevShifts.map(item =>
+            item.workShift === selectedWorkShift
+                ? { ...item, countOfWorker: item.countOfWorker + 1 } // Increment count
+                : item
+        )
+    );
+      // Calculate start and end dates for fetching shifts for the next week
+      const startOfWeek = selectedValue.startOf('week'); // Gets the Monday of the selected week
+      const endOfWeek = startOfWeek.add(6, 'day'); // Gets the Sunday of that week
+
+      await fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
+
+      setSelectedWorkShift(""); // Reset selection if needed
+    } catch (error) {
+      message.error("Failed to register shift - Duplicated Shift!");
+    }
+  };
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleOk = async () => {
+    if (startDate && endDate) {
+      if (role === "MANAGER") {
+        // Fetch worker shifts for the given date range (week) for Manager role
+        await fetchWorkerInShift(startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'));
+    } else {
+        // Fetch the user's own shifts if the role is not Manager
+        await fetchMyShift(startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'));
+    }
+      setIsModalVisible(false);
+    } else {
+      message.warning("Please select both start and end dates.");
+    }
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const getShiftsForDate = (date) => {
+    const dateStr = date.format('YYYY-MM-DD');
+    if (role === "MANAGER") {
+      // Filter worker shifts for Managers
+      return workerInShifts.filter(shift => {
+          const shiftDate = dayjs(shift.date); // Assuming each shift has a 'shiftDate'
+          return shiftDate.isSame(dateStr, 'day');
+      });
+  } else {
+      // Filter my shifts for non-Managers
+      return myShift.filter(shift => {
+          const start = dayjs(shift.startDate);
+          const end = dayjs(shift.endDate);
+          return date.isSameOrAfter(start) && date.isSameOrBefore(end);
+      });
+  }
+  };
+
+  const dateCellRender = (current) => {
+    const shiftsForDate = getShiftsForDate(current);
+    if (shiftsForDate.length === 0) return null;
+
+    return (
+      <ul className="events">
+        {shiftsForDate.map(shift => (
+          <li key={shift.userShiftId}>
+          {role === "MANAGER" ? (
+      <>
+      {/* Display each worker's name */}
+      {shift.users.map(user => (
+        <Badge
+          key={user.userID}
+          status="success"
+          text={`${user.fullName} - ${shift.workShift}`}
+        />
+      ))}
+    </>
+  ) : (
+    <Badge status="success" text={shift.workShift} />
+  )}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  return (
+    <>
+      <Alert message={`You selected date: ${selectedValue.format('YYYY-MM-DD')}`} />
+      <Calendar
+        value={value}
+        onSelect={onSelect}
+        dateCellRender={dateCellRender}
+      />
+
+      <Space style={{ marginTop: 16 }}>
+        {/* <h3>Workers in Shift for {selectedValue.format('YYYY-MM-DD')}:</h3> */}
+        <Button type="default" onClick={showModal}>
+          View Your Shift
+        </Button>
+        <Button type="primary" onClick={handleRegisterShift}>
+          Register
+        </Button>
+  
+      </Space>
+
+      {workerInShifts.length > 0 ? (
+        <List
+          bordered
+          dataSource={workerInShifts}
+          renderItem={(item) => (
+            <List.Item>
+              {item.countOfWorker} worker - {item.workShift}
+              <Checkbox
+                checked={selectedWorkShift === item.workShift}
+                onChange={() => onCheckboxChange(item.workShift)}
+                disabled={item.countOfWorker === 5 || (item.workShift === "SHIFT_THREE" && item.countOfWorker === 2)}
+              />
+            </List.Item>
+          )}
+        />
+      ) : (
+        // <p>No workers found for this date.</p>
+        ""
+      )}
+
+      <Modal
+        title="Filter by Date Range"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Space direction="vertical" size={12}>
+          <DatePicker
+            showTime
+            placeholder="Select Start Date"
+            onChange={(date) => setStartDate(date)}
+          />
+          <DatePicker
+            showTime
+            placeholder="Select End Date"
+            onChange={(date) => setEndDate(date)}
+          />
+        </Space>
+      </Modal>
+    </>
+  );
+};
+
+export default ShiftManagement;
