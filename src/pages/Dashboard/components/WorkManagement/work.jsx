@@ -2,13 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm, DatePicker, Tag } from "antd";
 import moment from "moment";
 
-import { addWork,deleteWork,getMyAssignedTask,getMyWork,getWork, updateWork } from "../../../../services/api/WorkApi";
+import { addWork,deleteWork,getAvailableUsers,getMyAssignedTask,getMyWork,getWork, updateWork } from "../../../../services/api/WorkApi";
 import {  getCage } from "../../../../services/api/CageApi";
 import { getAllUsers } from "../../../../services/api/UserApi";
 import TextArea from "antd/es/input/TextArea";
 import { useSelector } from "react-redux";
 import { addReport, getReport, updateReport } from "../../../../services/api/ReportApi";
 import { Link } from "react-router-dom";
+import dayjs from "dayjs";
 const { Option } = Select;
 
 const WorkManagement = () => {
@@ -21,6 +22,12 @@ const WorkManagement = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingWork, setEditingWork] = useState(null);
     const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+    const [availableUser, setAvailableUser] = useState([]);
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
+    const [shift, setShift] = useState(null);
+    const [assignee, setAssignee] = useState(null);
+
 const [editingReport, setEditingReport] = useState(null);
 
     const [form] = Form.useForm();
@@ -49,6 +56,25 @@ const [editingReport, setEditingReport] = useState(null);
             message.error("Failed to fetch users data.");
         }
     };
+   // Function to fetch available users
+  const fetchAvailableUser = async () => {
+    if (startDate && endDate && shift) {
+      try {
+        const formattedStartDate = dayjs(startDate).format('YYYY-MM-DD');
+        const formattedEndDate = dayjs(endDate).format('YYYY-MM-DD');
+        const response = await getAvailableUsers(formattedStartDate,formattedEndDate, shift);
+        const data = await response
+        setAvailableUser(data); // Assuming data is an array of available users
+      } catch (error) {
+        console.error('Error fetching available users:', error);
+      }
+    }
+  };
+  useEffect(() => {
+    if (startDate && endDate && shift) {
+      fetchAvailableUser();
+    }
+  }, [startDate, endDate, shift]);
     const fetchCages = async () => {
         try {
             const response = await getCage();
@@ -359,6 +385,51 @@ const [editingReport, setEditingReport] = useState(null);
                 onCancel={handleCancel}
             >
                 <Form form={form} layout="vertical">
+                   
+                    <Form.Item
+                    name = "startDate"
+                    label = "Start Date"
+                    rules={[{ required: true, message: "Please select startDate!" }]}
+                    >
+                        <DatePicker onChange={(date) => setStartDate(date)} 
+                             format="YYYY-MM-DD"/>
+                    </Form.Item>
+                    <Form.Item
+                    name = "endDate"
+                    label = "End Date"
+                    rules={[{ required: true, message: "Please select endDate!" }]}
+                    >
+                        <DatePicker onChange={(date) => setEndDate(date)}  format="YYYY-MM-DD"/>
+                    </Form.Item>
+                    <Form.Item
+                        name = "shift"
+                        label="Shift"
+                        rules={[{required: true, message: "Please select the Shift"}]}
+                    >
+                        <Select placeholder = "Select a Shift"   
+                        onChange={(value) => setShift(value)}
+                        >
+                            <Option value='SHIFT_ONE'> SHIFT_ONE</Option>
+                            <Option value='SHIFT_TWO'> SHIFT_TWO</Option>
+                            <Option value='SHIFT_THREE'> SHIFT_THREE</Option>                         
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="assigneeID"
+                        label="Assignee Name"
+                        rules={[{ required: true, message: "Please select an assignee!" }]}
+                    >
+                        <Select placeholder="Select an assignee"
+                         onChange={(value) => setAssignee(value)}
+                     
+                         >
+                            {availableUser.map((user) => (
+                                <Option key={user.user.userID} value={user.user.userID}>
+                                    {user.user.fullName}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
                     <Form.Item
                         name = "mission"
                         label="Mission"
@@ -372,31 +443,6 @@ const [editingReport, setEditingReport] = useState(null);
                             <Option value='OTHER'> OTHER</Option>
                         </Select>
 
-                    </Form.Item>
-                    <Form.Item
-                        name="assigneeID"
-                        label="Assignee Name"
-                        rules={[{ required: true, message: "Please select an assignee!" }]}
-                    >
-                        <Select placeholder="Select an assignee">
-                            {users.map((user) => (
-                                <Option key={user.userID} value={user.userID}>
-                                    {user.fullName}
-                                </Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-                    <Form.Item
-                    name = "startDate"
-                    label = "Start Date"
-                    >
-                        <DatePicker/>
-                    </Form.Item>
-                    <Form.Item
-                    name = "endDate"
-                    label = "End Date"
-                    >
-                        <DatePicker/>
                     </Form.Item>
                     <Form.Item
                         name="description"  // Sử dụng tên trường đúng là cageName
@@ -419,18 +465,7 @@ const [editingReport, setEditingReport] = useState(null);
                             ))}
                         </Select>
                     </Form.Item>
-                    <Form.Item
-                        name = "shift"
-                        label="Shift"
-                        rules={[{required: true, message: "Please select the Shift"}]}
-                    >
-                        <Select placeholder = "Select a Shift"
-                        >
-                            <Option value='SHIFT_ONE'> SHIFT_ONE</Option>
-                            <Option value='SHIFT_TWO'> SHIFT_TWO</Option>
-                            <Option value='SHIFT_THREE'> SHIFT_THREE</Option>                         
-                        </Select>
-                    </Form.Item>
+                   
                     {editingWork && (
                     <Form.Item
                         name = "status"

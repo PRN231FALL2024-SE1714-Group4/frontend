@@ -17,6 +17,8 @@ import WorkManagement from "../../pages/Dashboard/components/WorkManagement/work
 import ReportManagement from "../../pages/Dashboard/components/ReportManagement/Report";
 import ReportDetail from "../../pages/Dashboard/components/WorkManagement/reportDetail";
 import ShiftManagement from "../../pages/Dashboard/components/ShiftManagement/shift";
+import AnimalManagement from "../../pages/Dashboard/components/AnimalManagement/Animal";
+import HistoryManagement from "../../pages/Dashboard/components/HistoryManagement/History";
 
 
 
@@ -40,6 +42,8 @@ const AppRouting = () => {
            
                 <Route path="reports" element={<ReportManagement />} />
                 <Route path="shifts" element={<ShiftManagement />} />
+                <Route path="animals" element={<AnimalManagement />} />
+                <Route path="histories" element={<HistoryManagement />} />
             </Route>
         </Routes>
     );
