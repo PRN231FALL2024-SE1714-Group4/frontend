@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from "antd";
-import moment from "moment";
 
-import { createArea, getArea, deleteArea, updateArea, getAreaById } from '/src/services/api/AreaApi.js';
-import { updateAnimal } from "../../../../services/api/Animal";
+import React, { useState, useEffect } from "react";
+import { Table, Button, Modal, Form, Input, message, Space, Select,Popconfirm } from "antd";
+import moment from "moment";
+import { addAnimal, deleteAnimal, getAnimal, updateAnimal } from "../../../../services/api/Animal";
+
 const AnimalManagement = () => {
     const [animals, setAnimals] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -16,11 +16,8 @@ const AnimalManagement = () => {
 
     const fetchAnimals = async () => {
         try {
-            // Fetch animals data from API
-            const response = await getArea();
-            const data = response; // Extract data from response
-            setAnimals(data); // Set animals data into state
-          
+            const response = await getAnimal();
+            setAnimals(response); // Set animals data into state
         } catch (error) {
             message.error("Failed to fetch animals data.");
         }
@@ -31,82 +28,84 @@ const AnimalManagement = () => {
         setIsModalVisible(true);
     };
 
-    const handleEdit = (record) => {
-        setEditingAnimal(record);
-        setIsModalVisible(true);
-        form.setFieldsValue({
-            ...record,
-            createdDate: record.createdDate ? new Date(record.createdDate) : null,
-            updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
-        });
-    };
-
-    const handleDelete = async (id) => {
-        try {
-            // Delete area by id from API (implement deleteArea function)
-            await deleteArea(id);
-            setAnimals(animals.filter((item) => item.areaID !== id));
-            message.success("Area deleted successfully.");
-        } catch (error) {
-            message.error("Failed to delete area.");
-        }
-    };
-
     const handleOk = async () => {
         try {
             const values = await form.validateFields();
-            const name = values.name;
-    
-            if (!name || typeof name !== 'string') {
-                message.error("Invalid name. Please input a valid string.");
-                return;
-            }
-    
+            const { breed, gender, age, source } = values;
+
             if (editingAnimal) {
-                // Update existing area
-                await updateAnimal(editingAnimal.areaID, name);
+                // Update existing animal
+                await updateAnimal(editingAnimal.animalID, breed, gender, age, source);
                 const updatedAnimals = animals.map((item) =>
-                    item.areaID === editingAnimal.areaID ? { ...item, name } : item
+                    item.animalID === editingAnimal.animalID ? { ...item, breed, gender, age, source } : item
                 );
                 setAnimals(updatedAnimals);
-                message.success("Area updated successfully.");
+                message.success("Animal updated successfully.");
             } else {
-                // Create new area
-                const newArea = await createArea(name);
-    
-                // Kiểm tra nếu animals là một mảng
-                if (Array.isArray(animals)) {
-                    setAnimals([newArea, ...animals]);
-                } else {
-                    setAnimals([newArea]); // Nếu không, khởi tạo mảng mới
-                }
-                message.success("Area added successfully.");
+                // Add new animal
+                const newAnimal = await addAnimal(breed, age, gender, source);
+                setAnimals([newAnimal, ...animals]);
+                message.success("Animal added successfully.");
             }
+
             setIsModalVisible(false);
             form.resetFields();
-            fetchAnimals(); // Cập nhật dữ liệu sau khi thêm
+            fetchAnimals();
         } catch (error) {
             message.error("Validation failed: " + error.message);
         }
     };
-    
 
     const handleCancel = () => {
         setIsModalVisible(false);
         form.resetFields();
     };
 
+ const handleEdit = (record) => {
+        setEditingAnimal(record);
+        setIsModalVisible(true);
+        form.setFieldsValue({
+            ...record,
+            // createdDate: record.createdDate ? new Date(record.createdDate) : null,
+            // updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
+        });
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            // Delete area by id from API (implement deleteArea function)
+            await deleteAnimal(id);
+            setAnimals(animals.filter((item) => item.animalID !== id));
+            message.success("Animal deleted successfully.");
+        } catch (error) {
+            message.error("Failed to delete area.");
+        }
+    };
     const columns = [
         {
             title: "No",
-            // dataIndex: "index", // Sử dụng thuộc tính "name" từ dữ liệu trả về
             key: "id",
-            render: (text, record, index) => index + 1, // Hiển thị số thứ tự dựa trên index
+            render: (text, record, index) => index + 1, // Display serial number based on index
         },
         {
-            title: "Area Name",
-            dataIndex: "name", // Sử dụng thuộc tính "name" từ dữ liệu trả về
-            key: "name",
+            title: "Breed",
+            dataIndex: "breed",
+            key: "breed",
+        },
+        {
+            title: "Source",
+            dataIndex: "source",
+            key: "source",
+        },
+        {
+            title: "Gender",
+            dataIndex: "gender",
+            key: "gender",
+        },
+        {
+            title: "Age",
+            dataIndex: "age",
+            key: "age",
         },
         {
             title: "Created Date",
@@ -114,7 +113,7 @@ const AnimalManagement = () => {
             key: "createdDate",
             render: (text) => moment(text).format("YYYY-MM-DD"),
         },
-         {
+        {
             title: "Action",
             key: "action",
             render: (_, record) => (
@@ -122,10 +121,9 @@ const AnimalManagement = () => {
                     <Button type="primary" onClick={() => handleEdit(record)}>
                         Edit
                     </Button>
-                   
                     <Popconfirm
-                        title="Are you sure to delete this cage?"
-                        onConfirm={() => handleDelete(record.areaID)}
+                        title="Are you sure to delete animal?"
+                        onConfirm={() => handleDelete(record.animalID)}
                         okText="Yes"
                         cancelText="No"
                     >
@@ -140,34 +138,61 @@ const AnimalManagement = () => {
 
     return (
         <div>
-                <Space style={{ margin: 15 }}>
-                    <Button type="primary" onClick={handleAdd}>
-                        Add Areas
-                    </Button>
-                </Space>
-            
-                <Modal
-                    title={editingAnimal ? "Edit Area" : "Add Area"}
-                    visible={isModalVisible}
-                    onOk={handleOk}
-                    onCancel={handleCancel}
-                >
-                    <Form form={form} layout="vertical">
-                        <Form.Item
-                            name="name"
-                            label="Name"
-                            rules={[
-                                {
-                                    required: true,
-                                    message: "Please input the name!",
-                                },
-                            ]}
-                        >
-                            <Input />
-                        </Form.Item>
-                    </Form>
-                </Modal>
-               <Table dataSource={animals} columns={columns} rowKey="areaID" pagination={{ pageSize: 7 }} />
+            <Space style={{ margin: 15 }}>
+                <Button type="primary" onClick={handleAdd}>
+                    Add Animal
+                </Button>
+            </Space>
+            <Modal
+                title={editingAnimal ? "Edit Animal" : "Add Animal"}
+                open={isModalVisible}
+                onOk={handleOk}
+                onCancel={handleCancel}
+            >
+                <Form form={form} layout="vertical">
+                    <Form.Item
+                        name="breed"
+                        label="Breed"
+                        rules={[{ required: true, message: "Please select the breed!" }]}
+                    >
+                        <Select>
+                            <Select.Option value="brood_sow">Brood Sow</Select.Option>
+                            <Select.Option value="market_hog">Market Hog</Select.Option>
+                            <Select.Option value="boar">Boar</Select.Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="gender"
+                        label="Gender"
+                        rules={[{ required: true, message: "Please select the gender!" }]}
+                    >
+                        <Select>
+                            <Select.Option value="female">Female</Select.Option>
+                            <Select.Option value="male">Male</Select.Option>
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="age"
+                        label="Age"
+                        rules={[{ required: true, message: "Please input the age!" }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        name="source"
+                        label="Source"
+                        rules={[{ required: true, message: "Please input the source!" }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                </Form>
+            </Modal>
+            <Table
+                dataSource={animals}
+                columns={columns}
+                rowKey="animalID"
+                pagination={{ pageSize: 7 }}
+            />
         </div>
     );
 };

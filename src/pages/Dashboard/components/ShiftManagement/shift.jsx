@@ -12,6 +12,7 @@ dayjs.extend(isSameOrBefore);
 
 const ShiftManagement = () => {
   const [workerInShifts, setWorkerInShifts] = useState([]);
+  const [workerInShiftsMonth, setWorkerInShiftsMonth] = useState([]);
   const [availableWorker, setAvailableWorker] = useState([]);
   const [myShift, setMyShift] = useState([]);
   
@@ -23,17 +24,24 @@ const ShiftManagement = () => {
   const [endDate, setEndDate] = useState(null);  
 
   const role = useSelector((state) => state.auth.role);
-  // const dataSource = role === "STAFF" ? workerInShifts : availableWorker;
+  const dataSource = role === "STAFF" ? workerInShifts : workerInShiftsMonth;
 
 
   useEffect(() => {
     const startOfWeek = dayjs().startOf('week'); // Gets the Monday of the current week
     const endOfWeek = dayjs().endOf('week'); // Gets the Sunday of the current week
-
+    const startOfMonth = dayjs().startOf('month'); // Gets the Monday of the current week
+    const endOfMonth = dayjs().endOf('month'); // Gets the Sunday of the current week
     setStartDate(startOfWeek);
     setEndDate(endOfWeek);
-
-    fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
+    if(role === "STAFF") {
+      fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
+    }
+    else {
+      setStartDate(startOfMonth);
+      setEndDate(endOfMonth);
+      fetchWorkerInShift(startOfMonth.format('YYYY-MM-DD'), endOfMonth.format('YYYY-MM-DD'))
+    }
   }, []);
   const fetchAvailAbleWorker = async () => { 
     try { 
@@ -68,8 +76,11 @@ const ShiftManagement = () => {
     const startDate = newValue.format('YYYY-MM-DD');
     const endDate = newValue.format('YYYY-MM-DD');
 
+    if(role === "STAFF"){
+      await fetchWorkerInShift(startDate, endDate); // Call API to fetch workers in shifts
+    }
     // Fetch worker shifts for the selected date
-    await fetchWorkerInShift(startDate, endDate); // Call API to fetch workers in shifts
+ 
   };
 
   const onCheckboxChange = (workShift) => {
@@ -102,7 +113,8 @@ const ShiftManagement = () => {
       // Calculate start and end dates for fetching shifts for the next week
       const startOfWeek = selectedValue.startOf('week'); // Gets the Monday of the selected week
       const endOfWeek = startOfWeek.add(6, 'day'); // Gets the Sunday of that week
-
+      const startOfMonth = selectedValue.startOf('month'); // Gets the Monday of the selected week
+      const endOfMonth = startOfWeek.add(31, 'month'); // Gets the Sunday of that week
       await fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
 
       setSelectedWorkShift(""); // Reset selection if needed
@@ -162,7 +174,7 @@ const ShiftManagement = () => {
           <li key={shift.userShiftId}>
           {role === "MANAGER" ? (
       <>
-      {/* Display each worker's name */}
+      {/* Display each worker's name*/}
       {shift.users.map(user => (
         <Badge
           key={user.userID}
@@ -182,6 +194,9 @@ const ShiftManagement = () => {
 
   return (
     <>
+      <Button type="default" onClick={showModal}>
+          Filter Shift
+        </Button>
       <Alert message={`You selected date: ${selectedValue.format('YYYY-MM-DD')}`} />
       <Calendar
         value={value}
@@ -191,34 +206,38 @@ const ShiftManagement = () => {
 
       <Space style={{ marginTop: 16 }}>
         {/* <h3>Workers in Shift for {selectedValue.format('YYYY-MM-DD')}:</h3> */}
-        <Button type="default" onClick={showModal}>
-          View Your Shift
-        </Button>
-        <Button type="primary" onClick={handleRegisterShift}>
+      
+        <Button type="primary" onClick={handleRegisterShift}
+        hidden= {role ==="MANAGER"}>
           Register
         </Button>
   
       </Space>
-
       {workerInShifts.length > 0 ? (
-        <List
-          bordered
-          dataSource={workerInShifts}
-          renderItem={(item) => (
-            <List.Item>
-              {item.countOfWorker} worker - {item.workShift}
-              <Checkbox
-                checked={selectedWorkShift === item.workShift}
-                onChange={() => onCheckboxChange(item.workShift)}
-                disabled={item.countOfWorker === 5 || (item.workShift === "SHIFT_THREE" && item.countOfWorker === 2)}
-              />
-            </List.Item>
-          )}
-        />
-      ) : (
-        // <p>No workers found for this date.</p>
-        ""
-      )}
+  <List
+    bordered
+    dataSource={workerInShifts}
+    renderItem={(item) => {
+      // Only render for STAFF role
+      if (role === "STAFF") {
+        return (
+          <List.Item>
+            {item.countOfWorker} worker - {item.workShift}
+            <Checkbox
+              checked={selectedWorkShift === item.workShift}
+              onChange={() => onCheckboxChange(item.workShift)}
+              disabled={item.countOfWorker === 5 || (item.workShift === "SHIFT_THREE" && item.countOfWorker === 2)}
+            />
+          </List.Item>
+        );
+      }
+      // For MANAGER role, do not render anything
+      return null; // Or you can return <></> for an empty fragment
+    }}
+  />
+) : (
+  ""
+)}
 
       <Modal
         title="Filter by Date Range"

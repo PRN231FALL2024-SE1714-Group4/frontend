@@ -22,25 +22,22 @@ export const updateAnimal = async (id, breed, gender,age,source, dateOfBirth) =>
     }
 };
 
-export const banUser = async (id) => {
+export const deleteAnimal = async (id) => {
     try {
-        const response = await api.put(`account/${id}/ban`);
+        const response = await api.put(`Animal/${id}`);
         return response.data;
     } catch (error) {
         console.error("Error deleting user:", error);
         throw error;
     }
 };
-export const addAnimal = async (
-   breed, age, gender,source
-) => {
+export const addAnimal = async (breed, age, gender, source) => {
     try {
-        const response = await api.post(`User/register`, {
-            breed, age, gender,source
-        });
+        const response = await api.post('Animal', { breed, age, gender, source });
+        console.log("API response:", response.data); // Check API response
         return response.data;
     } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error adding animal:", error);
         throw error;
     }
 };
