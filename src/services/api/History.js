@@ -33,6 +33,7 @@ const deleteHistory = async (id) => {
         throw error;
     }
 };
+
 const updateHistory = async (id,data) => {
     try {
         const response = await api.put(`History${id}`, data);

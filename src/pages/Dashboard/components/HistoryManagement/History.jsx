@@ -1,8 +1,11 @@
+
+
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm, DatePicker } from "antd";
+import { Table, Button, Modal, Form, Input, message, Space, Select,Popconfirm, DatePicker } from "antd";
 import moment from "moment";
 
-import { createHistory, deleteHistory, getHistory, updateHistory } from "../../../../services/api/History";
+import { createHistory, deleteHistory, getHistory } from "../../../../services/api/History";
+
 import { getAnimal, updateAnimal } from "../../../../services/api/Animal";
 import { getCage } from "../../../../services/api/CageApi";
 
@@ -14,12 +17,15 @@ const HistoryManagement = () => {
     const [editingHistory, setEditingHistory] = useState(null);
     const [form] = Form.useForm();
 
+
     // Define fromDate and toDate in state
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
 
     const formattedFromDate = fromDate ? moment(fromDate).format("YYYY-MM-DD") : null;
     const formattedToDate = toDate ? moment(toDate).format("YYYY-MM-DD") : null;
+
+
 
     useEffect(() => {
         fetchHistory();
@@ -38,6 +44,7 @@ const HistoryManagement = () => {
     const fetchAnimal = async () => {
         try {
             const response = await getAnimal();
+
             setAnimals(response); // Set animals data into state
         } catch (error) {
             message.error("Failed to fetch animals data.");
@@ -53,6 +60,21 @@ const HistoryManagement = () => {
         }
     };
 
+
+            setAnimals(response); // Set histories data into state
+        } catch (error) {
+            message.error("Failed to fetch histories data.");
+        }
+    };
+    const fetchCage = async () => {
+        try {
+            const response = await getCage();
+            setCages(response); // Set histories data into state
+        } catch (error) {
+            message.error("Failed to fetch histories data.");
+        }
+    };
+
     const handleAdd = () => {
         setEditingHistory(null);
         setIsModalVisible(true);
@@ -60,6 +82,7 @@ const HistoryManagement = () => {
 
     const handleOk = async () => {
         try {
+
             
             const values = await form.validateFields();
             const { animalID, cageID, description, status, fromDate, toDate } = values;    
@@ -81,6 +104,24 @@ const HistoryManagement = () => {
             } else {
                 await createHistory(historyData);  // Pass the historyData object to the API
                 // Update UI state
+
+            const values = await form.validateFields();
+            const { animalID, cageID, description, status, formattedFromDate, formattedToDate} = values;
+
+            if (editingHistory) {
+                // Update existing animal
+                await updateAnimal(editingHistory.animalID, cageID, description, status,formattedFromDate, formattedToDate);
+                const updatedAnimals = histories.map((item) =>
+                    item.animalID === editingHistory.animalID ? { ...item, breed, gender, age, source } : item
+                );
+                setHistories(updatedAnimals);
+                message.success("Animal updated successfully.");
+            } else {
+                // Add new animal
+                const newAnimal = await createHistory(animalID, cageID, description, status,formattedFromDate, formattedToDate);
+                setHistories([newAnimal, ...histories]);
+                message.success("Animal added successfully.");
+
             }
 
             setIsModalVisible(false);
@@ -96,18 +137,27 @@ const HistoryManagement = () => {
         form.resetFields();
     };
 
-    const handleEdit = (record) => {
+
+
+
+ const handleEdit = (record) => {
+
         setEditingHistory(record);
         setIsModalVisible(true);
         form.setFieldsValue({
             ...record,
+
             fromDate: record.fromDate ? moment(record.fromDate) : null,
             toDate: record.toDate ? moment(record.toDate) : null,
+
+            // createdDate: record.createdDate ? new Date(record.createdDate) : null,
+            // updatedDate: record.updatedDate ? new Date(record.updatedDate) : null,
         });
     };
 
     const handleDelete = async (id) => {
         try {
+            // Delete area by id from API (implement deleteArea function)
             await deleteHistory(id);
             setHistories(histories.filter((item) => item.historyID !== id));
             message.success("History deleted successfully.");
@@ -115,7 +165,6 @@ const HistoryManagement = () => {
             message.error("Failed to delete History.");
         }
     };
-
     const columns = [
         {
             title: "No",
@@ -171,8 +220,10 @@ const HistoryManagement = () => {
                         Edit
                     </Button>
                     <Popconfirm
-                        title="Are you sure to delete this history?"
-                        onConfirm={() => handleDelete(record.historyID)}
+
+                        title="Are you sure to delete animal?"
+                        onConfirm={() => handleDelete(record.animalID)}
+
                         okText="Yes"
                         cancelText="No"
                     >
@@ -193,7 +244,8 @@ const HistoryManagement = () => {
                 </Button>
             </Space>
             <Modal
-                title={editingHistory ? "Edit History" : "Add History"}
+
+                title={editingHistory ? "Edit Animal" : "Add Animal"}
                 open={isModalVisible}
                 onOk={handleOk}
                 onCancel={handleCancel}
@@ -204,7 +256,8 @@ const HistoryManagement = () => {
                         label="Animal"
                         rules={[{ required: true, message: "Please select an animal!" }]}
                     >
-                        <Select placeholder="Select an animal">
+                      
+                            <Select placeholder="Select an animal">
                             {animals.map((animal) => (
                                 <Option key={animal.animalID} value={animal.animalID}>
                                     {animal.breed}
@@ -215,15 +268,16 @@ const HistoryManagement = () => {
                     <Form.Item
                         name="cageID"
                         label="Cage"
-                        rules={[{ required: true, message: "Please select a cage!" }]}
+                        rules={[{ required: true, message: "Please select a cage!" }]}                
                     >
-                        <Select placeholder="Select a cage">
+                               <Select placeholder="Select a Cage">
                             {cages.map((cage) => (
                                 <Option key={cage.cageID} value={cage.cageID}>
                                     {cage.cageName}
                                 </Option>
                             ))}
-                        </Select>
+                             </Select>
+
                     </Form.Item>
                     <Form.Item
                         name="description"
@@ -245,6 +299,7 @@ const HistoryManagement = () => {
                         rules={[{ required: true, message: "Please choose the from date!" }]}
                     >
                         <DatePicker onChange={(date) => setFromDate(date)} />
+               
                     </Form.Item>
                     <Form.Item
                         name="toDate"
