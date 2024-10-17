@@ -35,46 +35,78 @@ export const AppLayout = ({ components }) => {
         const items = [
             ...(role === "ADMIN"
                 ? [
-                      // Chỉ thêm mục này nếu người dùng là Admin
-                      getItem("AccountManagement", "sub1", <UserOutlined />, [
-                          getItem("User", "1", <Link to="/users"></Link>),
-                     
+                      // Chỉ thêm Account Management nếu role là ADMIN
+                      getItem("Account Management", "sub1", <UserOutlined />, [
+                          getItem("User Management", "1", <Link to="/users"></Link>),
                       ]),
-                      
+                     
                   ]
-                : []), // Nếu không phải Admin thì không thêm gì vào đây
-            
-            
-            {
-                key: "4",
-                icon: <ShoppingOutlined />,
-                label: <Link to="/areas">Area Management</Link>,
-            },
-            {
-                key: "5",
-                icon: <ShoppingOutlined />,
-                label: <Link to="/cages">Cage Management</Link>,
-            },
-            {
-                key: "6",
-                icon: <ShoppingOutlined />,
-                label: <Link to="/works">Work Management</Link>,
-            },
-            ...(role === "ADMIN"
+                : [
+                      // Nếu không phải ADMIN thì thêm các mục này
+                      {
+                          key: "4",
+                          icon: <ShoppingOutlined />,
+                          label: <Link to="/areas">Area Management</Link>,
+                      },
+                      {
+                          key: "5",
+                          icon: <ShoppingOutlined />,
+                          label: <Link to="/cages">Cage Management</Link>,
+                      },
+                      {
+                        key: "6",
+                        icon: <ShoppingOutlined />,
+                        label: <Link to="/works">Work Management</Link>,
+                    },             
+                      
+                  ]),
+         
+            ...(role === "MANAGER"
                 ? [
                     {
                         key: "7",
                         icon: <ShoppingOutlined />,
                         label: <Link to="/reports">Report Management</Link>,
                     },
+                    {
+                        key: "8", 
+                        icon: <ShoppingOutlined/>, 
+                        label: <Link to ="/shifts">Shifts Management</Link>
+                    },
+                       {
+                        key: "9", 
+                        icon: <ShoppingOutlined/>, 
+                        label: <Link to ="/animals">Animal Management</Link>
+                    },
+                    {
+                        key: "10", 
+                        icon: <ShoppingOutlined/>, 
+                        label: <Link to ="/histories">History Management</Link>
+                    }
                 ]
                 : []), // Nếu role là ADMIN thì thêm mục Report Management
-            
-                {
-                    key: "7", 
-                    icon: <ShoppingOutlined/>, 
-                    label: <Link to ="/shifts">Shifts Management</Link>
-                }
+                ...( role === "STAFF"
+                    ? [
+                        
+                        {
+                            key: "15", 
+                            icon: <ShoppingOutlined/>, 
+                            label: <Link to ="/shifts">Shifts Management</Link>
+                        },
+                        {
+                            key: "16", 
+                            icon: <ShoppingOutlined/>, 
+                            label: <Link to ="/animals">Animal Management</Link>
+                        },
+                        {
+                            key: "17", 
+                            icon: <ShoppingOutlined/>, 
+                            label: <Link to ="/histories">History Management</Link>
+                        }
+                    ]
+                    : []), // Nếu role là ADMIN thì thêm mục Report Management
+                
+             
 
            
         ];

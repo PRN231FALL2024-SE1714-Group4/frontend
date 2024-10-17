@@ -1,0 +1,268 @@
+import React, { useState, useEffect } from "react";
+import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm, DatePicker } from "antd";
+import moment from "moment";
+
+import { createHistory, deleteHistory, getHistory, updateHistory } from "../../../../services/api/History";
+import { getAnimal, updateAnimal } from "../../../../services/api/Animal";
+import { getCage } from "../../../../services/api/CageApi";
+
+const HistoryManagement = () => {
+    const [histories, setHistories] = useState([]);
+    const [cages, setCages] = useState([]);
+    const [animals, setAnimals] = useState([]);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [editingHistory, setEditingHistory] = useState(null);
+    const [form] = Form.useForm();
+
+    // Define fromDate and toDate in state
+    const [fromDate, setFromDate] = useState(null);
+    const [toDate, setToDate] = useState(null);
+
+    const formattedFromDate = fromDate ? moment(fromDate).format("YYYY-MM-DD") : null;
+    const formattedToDate = toDate ? moment(toDate).format("YYYY-MM-DD") : null;
+
+    useEffect(() => {
+        fetchHistory();
+        fetchAnimal();
+        fetchCage();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const response = await getHistory();
+            setHistories(response); // Set histories data into state
+        } catch (error) {
+            message.error("Failed to fetch histories data.");
+        }
+    };
+    const fetchAnimal = async () => {
+        try {
+            const response = await getAnimal();
+            setAnimals(response); // Set animals data into state
+        } catch (error) {
+            message.error("Failed to fetch animals data.");
+        }
+    };
+
+    const fetchCage = async () => {
+        try {
+            const response = await getCage();
+            setCages(response); // Set cages data into state
+        } catch (error) {
+            message.error("Failed to fetch cages data.");
+        }
+    };
+
+    const handleAdd = () => {
+        setEditingHistory(null);
+        setIsModalVisible(true);
+    };
+
+    const handleOk = async () => {
+        try {
+            
+            const values = await form.validateFields();
+            const { animalID, cageID, description, status, fromDate, toDate } = values;    
+            const formattedFromDate = fromDate ? moment(fromDate).format("YYYY-MM-DD") : null;
+            const formattedToDate = toDate ? moment(toDate).format("YYYY-MM-DD") : null;
+            const historyData = {
+                animalID,
+                cageID,
+                description,
+                status,
+                fromDate: formattedFromDate,
+                toDate: formattedToDate
+            };
+    
+
+            if (editingHistory) {
+                await updateHistory(editingHistory.historyID, historyData);
+                // Update UI state
+            } else {
+                await createHistory(historyData);  // Pass the historyData object to the API
+                // Update UI state
+            }
+
+            setIsModalVisible(false);
+            form.resetFields();
+            fetchHistory();
+        } catch (error) {
+            message.error("Validation failed: " + error.message);
+        }
+    };
+
+    const handleCancel = () => {
+        setIsModalVisible(false);
+        form.resetFields();
+    };
+
+    const handleEdit = (record) => {
+        setEditingHistory(record);
+        setIsModalVisible(true);
+        form.setFieldsValue({
+            ...record,
+            fromDate: record.fromDate ? moment(record.fromDate) : null,
+            toDate: record.toDate ? moment(record.toDate) : null,
+        });
+    };
+
+    const handleDelete = async (id) => {
+        try {
+            await deleteHistory(id);
+            setHistories(histories.filter((item) => item.historyID !== id));
+            message.success("History deleted successfully.");
+        } catch (error) {
+            message.error("Failed to delete History.");
+        }
+    };
+
+    const columns = [
+        {
+            title: "No",
+            key: "id",
+            render: (text, record, index) => index + 1, // Display serial number based on index
+        },
+        {
+            title: "Animal",
+            dataIndex: "animalID",
+            key: "animalID",
+            render: (animalID) => {
+                const animal = animals.find(animal => animal.animalID === animalID);
+                return animal ? animal.breed : "Unknown";
+            },
+        },
+        {
+            title: "Cage",
+            dataIndex: "cageID",
+            key: "cageID",
+            render: (cageID) => {
+                const cage = cages.find(cage => cage.cageID === cageID);
+                return cage ? cage.cageName : "Unknown";
+            }
+        },
+        {
+            title: "Description",
+            dataIndex: "description",
+            key: "description",
+        },
+        {
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
+        },
+        {
+            title: "From Date",
+            dataIndex: "fromDate",
+            key: "fromDate",
+            render: (text) => moment(text).format("YYYY-MM-DD"),
+        },
+        {
+            title: "To Date",
+            dataIndex: "toDate",
+            key: "toDate",
+            render: (text) => moment(text).format("YYYY-MM-DD"),
+        },
+        {
+            title: "Action",
+            key: "action",
+            render: (_, record) => (
+                <Space size="middle">
+                    <Button type="primary" onClick={() => handleEdit(record)}>
+                        Edit
+                    </Button>
+                    <Popconfirm
+                        title="Are you sure to delete this history?"
+                        onConfirm={() => handleDelete(record.historyID)}
+                        okText="Yes"
+                        cancelText="No"
+                    >
+                        <Button type="primary" danger>
+                            Delete
+                        </Button>
+                    </Popconfirm>
+                </Space>
+            ),
+        },
+    ];
+
+    return (
+        <div>
+            <Space style={{ margin: 15 }}>
+                <Button type="primary" onClick={handleAdd}>
+                    Add History
+                </Button>
+            </Space>
+            <Modal
+                title={editingHistory ? "Edit History" : "Add History"}
+                open={isModalVisible}
+                onOk={handleOk}
+                onCancel={handleCancel}
+            >
+                <Form form={form} layout="vertical">
+                    <Form.Item
+                        name="animalID"
+                        label="Animal"
+                        rules={[{ required: true, message: "Please select an animal!" }]}
+                    >
+                        <Select placeholder="Select an animal">
+                            {animals.map((animal) => (
+                                <Option key={animal.animalID} value={animal.animalID}>
+                                    {animal.breed}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="cageID"
+                        label="Cage"
+                        rules={[{ required: true, message: "Please select a cage!" }]}
+                    >
+                        <Select placeholder="Select a cage">
+                            {cages.map((cage) => (
+                                <Option key={cage.cageID} value={cage.cageID}>
+                                    {cage.cageName}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                    <Form.Item
+                        name="description"
+                        label="Description"
+                        rules={[{ required: true, message: "Please input the description!" }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        name="status"
+                        label="Status"
+                        rules={[{ required: true, message: "Please input the status!" }]}
+                    >
+                        <Input />
+                    </Form.Item>
+                    <Form.Item
+                        name="fromDate"
+                        label="From Date"
+                        rules={[{ required: true, message: "Please choose the from date!" }]}
+                    >
+                        <DatePicker onChange={(date) => setFromDate(date)} />
+                    </Form.Item>
+                    <Form.Item
+                        name="toDate"
+                        label="To Date"
+                        rules={[{ required: true, message: "Please choose the to date!" }]}
+                    >
+                        <DatePicker onChange={(date) => setToDate(date)} />
+                    </Form.Item>
+                </Form>
+            </Modal>
+            <Table
+                dataSource={histories}
+                columns={columns}
+                rowKey="historyID"
+                pagination={{ pageSize: 7 }}
+            />
+        </div>
+    );
+};
+
+export default HistoryManagement;

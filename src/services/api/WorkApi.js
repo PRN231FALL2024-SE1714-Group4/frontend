@@ -63,7 +63,22 @@ export const addWork = async (
         throw error;
     }
 };
-
+export const getAvailableUsers = async (fromDate,toDate,workShift) => {
+    try {
+        const response = await api.get(`UserShift/available-users`, {
+            params: {
+                fromDate: fromDate,
+                toDate: toDate,
+                workShift: workShift
+            }
+        });
+        return response.data;
+    } catch (error) {
+        // Handle error
+        console.error(error);
+        throw error;
+    }
+};
 export const updateWork = async (id, description, startDate, endDate, shift, assigneeID, mission, status) => {
     try {
         const response = await api.put(`Work/${id}`, {

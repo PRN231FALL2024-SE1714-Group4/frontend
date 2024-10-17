@@ -106,6 +106,11 @@ const CageManagement = () => {
             key: "cageName",
         },
         {
+            title: "Area",
+            dataIndex: ["area", "name"],
+            key: "cageName",
+        },
+        {
             title: "Created Date",
             dataIndex: "createdDate",
             key: "createdDate",
