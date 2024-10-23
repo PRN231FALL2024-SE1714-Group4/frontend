@@ -19,6 +19,7 @@ import ReportDetail from "../../pages/Dashboard/components/WorkManagement/report
 import ShiftManagement from "../../pages/Dashboard/components/ShiftManagement/shift";
 import AnimalManagement from "../../pages/Dashboard/components/AnimalManagement/Animal";
 import HistoryManagement from "../../pages/Dashboard/components/HistoryManagement/History";
+import HealthReportManagement from "../../pages/Dashboard/components/HealthReportManagement/HealthReport";
 
 
 
@@ -33,17 +34,23 @@ const AppRouting = () => {
                 <Route path="users" element={<UserManagement />} />
                 <Route path="staffs" element={<StaffManagement />} />
                 <Route path="managers" element={<ManagerManagement />} />
-                <Route path="areas" element={<AreaManagement />} />
-                <Route path="cages" element={<CageManagement />} />
+                <Route>
+                    <Route path="areas" element={<AreaManagement />} />
+                    <Route path="cages/:areaId" element={<CageManagement />} />
+                    <Route path="histories/:cageId" element={<HistoryManagement />} />
+                </Route>
+             
                 <Route>
                      <Route path="works" element={<WorkManagement />} />
                      <Route path="report-detail/:workId" element={<ReportDetail />} />
                 </Route>
-           
                 <Route path="reports" element={<ReportManagement />} />
                 <Route path="shifts" element={<ShiftManagement />} />
+                 
+                <Route path="cages" element={<CageManagement />} />
                 <Route path="animals" element={<AnimalManagement />} />
                 <Route path="histories" element={<HistoryManagement />} />
+                <Route path="healths" element={<HealthReportManagement />} />
             </Route>
         </Routes>
     );

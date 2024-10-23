@@ -3,12 +3,12 @@ import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from "a
 import moment from "moment";
 
 import { createArea, getArea, deleteArea, updateArea, getAreaById } from '/src/services/api/AreaApi.js';
+import { Link } from "react-router-dom";
 const AreaManagement = () => {
     const [areas, setAreas] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingArea, setEditingArea] = useState(null);
     const [form] = Form.useForm();
-
     useEffect(() => {
         fetchAreas();
     }, []);
@@ -89,7 +89,6 @@ const AreaManagement = () => {
         }
     };
     
-
     const handleCancel = () => {
         setIsModalVisible(false);
         form.resetFields();
@@ -106,6 +105,9 @@ const AreaManagement = () => {
             title: "Area Name",
             dataIndex: "name", // Sử dụng thuộc tính "name" từ dữ liệu trả về
             key: "name",
+            render: (text, record) => (
+                <Link to={`/cages/${record.areaID}`}>{text}</Link>
+            ),
         },
         {
             title: "Created Date",
