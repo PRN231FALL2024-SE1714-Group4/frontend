@@ -4,6 +4,8 @@ import { Table, Button, Modal, Form, Input, message, Space, Select,Popconfirm } 
 import moment from "moment";
 import { addAnimal, deleteAnimal, getAnimal, updateAnimal } from "../../../../services/api/Animal";
 
+
+
 const AnimalManagement = () => {
     const [animals, setAnimals] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -28,22 +30,19 @@ const AnimalManagement = () => {
         setIsModalVisible(true);
     };
 
-    const handleOk = async () => {
+    const handleOk = async (values) => {
         try {
-            const values = await form.validateFields();
-            const { breed, gender, age, source } = values;
-
             if (editingAnimal) {
                 // Update existing animal
-                await updateAnimal(editingAnimal.animalID, breed, gender, age, source);
+                await updateAnimal(editingAnimal.animalID, values);
                 const updatedAnimals = animals.map((item) =>
-                    item.animalID === editingAnimal.animalID ? { ...item, breed, gender, age, source } : item
+                    item.animalID === editingAnimal.animalID ? { ...item, values} : item
                 );
                 setAnimals(updatedAnimals);
                 message.success("Animal updated successfully.");
             } else {
                 // Add new animal
-                const newAnimal = await addAnimal(breed, age, gender, source);
+                const newAnimal = await addAnimal(values);
                 setAnimals([newAnimal, ...animals]);
                 message.success("Animal added successfully.");
             }
@@ -146,10 +145,10 @@ const AnimalManagement = () => {
             <Modal
                 title={editingAnimal ? "Edit Animal" : "Add Animal"}
                 open={isModalVisible}
-                onOk={handleOk}
+                onOk={()=> form.submit()}
                 onCancel={handleCancel}
             >
-                <Form form={form} layout="vertical">
+                <Form onFinish={handleOk} form={form} layout="vertical">
                     <Form.Item
                         name="breed"
                         label="Breed"
@@ -158,7 +157,7 @@ const AnimalManagement = () => {
                         <Select>
                             <Select.Option value="brood_sow">Brood Sow</Select.Option>
                             <Select.Option value="market_hog">Market Hog</Select.Option>
-                            <Select.Option value="boar">Boar</Select.Option>
+                            {/* <Select.Option value="boar">Boar</Select.Option> */}
                         </Select>
                     </Form.Item>
                     <Form.Item

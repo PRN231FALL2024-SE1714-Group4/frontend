@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from "react";
-import { Alert, Calendar, List, Button, Space, Checkbox, message, DatePicker, Modal, Badge } from "antd";
+import { Alert, Calendar, List, Button, Space, Checkbox, message, DatePicker, Modal, Badge, Select } from "antd";
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
@@ -20,8 +20,12 @@ const ShiftManagement = () => {
   const [selectedValue, setSelectedValue] = useState(dayjs());
   const [selectedWorkShift, setSelectedWorkShift] = useState(""); 
   const [isModalVisible, setIsModalVisible] = useState(false);  
+  const [isRegisterModalVisible, setIsRegisterModalVisible] = useState(false);
   const [startDate, setStartDate] = useState(null);  
   const [endDate, setEndDate] = useState(null);  
+  const [registerStartDate, setRegisterStartDate] = useState(null); // For register modal
+  const [registerEndDate, setRegisterEndDate] = useState(null);     // For register modal
+  const [registerWorkShift, setRegisterWorkShift] = useState("");   // For register modal
 
   const role = useSelector((state) => state.auth.role);
   const dataSource = role === "STAFF" ? workerInShifts : workerInShiftsMonth;
@@ -32,10 +36,10 @@ const ShiftManagement = () => {
     const endOfWeek = dayjs().endOf('week'); // Gets the Sunday of the current week
     const startOfMonth = dayjs().startOf('month'); // Gets the Monday of the current week
     const endOfMonth = dayjs().endOf('month'); // Gets the Sunday of the current week
-    setStartDate(startOfWeek);
-    setEndDate(endOfWeek);
+    setStartDate(startOfMonth);
+    setEndDate(endOfMonth);
     if(role === "STAFF") {
-      fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
+      fetchMyShift(startOfMonth.format('YYYY-MM-DD'), endOfMonth.format('YYYY-MM-DD'));
     }
     else {
       setStartDate(startOfMonth);
@@ -122,11 +126,32 @@ const ShiftManagement = () => {
       message.error("Failed to register shift - Duplicated Shift!");
     }
   };
+  const handleRegisterByTimePeriod = async () => {
+    if (!registerWorkShift || !registerStartDate || !registerEndDate) {
+      message.warning("Please select all fields.");
+      return;
+    }
 
+    const data = [{
+      workShift: registerWorkShift,
+      startDate: registerStartDate.format('YYYY-MM-DD'),
+      endDate: registerEndDate.format('YYYY-MM-DD'),
+    }];
+
+    try {
+      await registerShift(data);
+      message.success("Shift registered successfully by time period.");
+      setIsRegisterModalVisible(false);
+    } catch (error) {
+      message.error("Failed to register shift by time period.");
+    }
+  };
   const showModal = () => {
     setIsModalVisible(true);
   };
-
+  const showRegisterModal = () => {
+    setIsRegisterModalVisible(true);
+  };
   const handleOk = async () => {
     if (startDate && endDate) {
       if (role === "MANAGER") {
@@ -145,7 +170,9 @@ const ShiftManagement = () => {
   const handleCancel = () => {
     setIsModalVisible(false);
   };
-
+  const handleRegisterModalCancel = () => {
+    setIsRegisterModalVisible(false);
+  };
   const getShiftsForDate = (date) => {
     const dateStr = date.format('YYYY-MM-DD');
     if (role === "MANAGER") {
@@ -197,6 +224,9 @@ const ShiftManagement = () => {
       <Button type="default" onClick={showModal}>
           Filter Shift
         </Button>
+        <Button type="primary" onClick={showRegisterModal}>
+        Register by time period
+      </Button>
       <Alert message={`You selected date: ${selectedValue.format('YYYY-MM-DD')}`} />
       <Calendar
         value={value}
@@ -256,6 +286,34 @@ const ShiftManagement = () => {
             placeholder="Select End Date"
             onChange={(date) => setEndDate(date)}
           />
+        </Space>
+      </Modal>
+
+      <Modal
+        title="Register Shift by Time Period"
+        visible={isRegisterModalVisible}
+        onOk={handleRegisterByTimePeriod}
+        onCancel={handleRegisterModalCancel}
+      >
+        <Space direction="vertical" size={12}>
+          <DatePicker
+            showTime
+            placeholder="Select Start Date"
+            onChange={(date) => setRegisterStartDate(date)}
+          />
+          <DatePicker
+            showTime
+            placeholder="Select End Date"
+            onChange={(date) => setRegisterEndDate(date)}
+          />
+          <Select
+            placeholder="Select Work Shift"
+            onChange={(shift) => setRegisterWorkShift(shift)}
+          >
+            <Option value="SHIFT_ONE">Shift One</Option>
+            <Option value="SHIFT_TWO">Shift Two</Option>
+            <Option value="SHIFT_THREE">Shift Three</Option>
+          </Select>
         </Space>
       </Modal>
     </>

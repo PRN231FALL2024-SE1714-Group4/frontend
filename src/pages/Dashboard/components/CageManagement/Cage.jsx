@@ -3,20 +3,25 @@ import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm }
 import moment from "moment";
 import { getArea } from '/src/services/api/AreaApi.js';
 import { createCage, getCage, deleteCage, updateCage } from '/src/services/api/CageApi.js';
-
+import { Link, useLocation, useParams } from "react-router-dom";
 const { Option } = Select;
 
 const CageManagement = () => {
+    const { areaId } = useParams(); // Lấy areaId từ params
     const [cages, setCages] = useState([]);
+    const [cagesByAreId, setCagesByAreaId] = useState([]);
     const [areas, setAreas] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingCage, setEditingCage] = useState(null);
     const [form] = Form.useForm();
 
     useEffect(() => {
+        fetchCagesById();
+    }, [areaId]);
+    useEffect(() => { 
         fetchCages();
         fetchAreas();
-    }, []);
+    },[])
 
     const fetchAreas = async () => {
         try {
@@ -27,10 +32,20 @@ const CageManagement = () => {
         }
     };
 
+    const fetchCagesById = async () => {
+        try {
+            const response = await getCage();
+           const filteredCages = response.filter(cage => cage.areaID === areaId);
+           setCagesByAreaId(filteredCages);
+        } catch (error) {
+            message.error("Failed to fetch Cages data.");
+        }
+    };
     const fetchCages = async () => {
         try {
             const response = await getCage();
-            setCages(response); 
+      
+            setCages(response);
         } catch (error) {
             message.error("Failed to fetch Cages data.");
         }
@@ -39,6 +54,7 @@ const CageManagement = () => {
     const handleAdd = () => {
         setEditingCage(null);
         setIsModalVisible(true);
+        form.setFieldsValue({ areaId });
     };
 
     const handleEdit = (record) => {
@@ -65,19 +81,19 @@ const CageManagement = () => {
         try {
             const values = await form.validateFields();
             console.log(values);
-            const { cageName, areaID } = values;  // Sử dụng cageName và areaID từ form values
+            const { cageName } = values;  // Sử dụng cageName và areaID từ form values
 
             if (editingCage) {
                 // Update existing Cage
-                await updateCage(editingCage.cageID, cageName, areaID );
+                await updateCage(editingCage.cageID, cageName,  editingCage.areaID);
                 const updatedCages = cages.map((item) =>
-                    item.cageID === editingCage.cageID ? { ...item, cageName, areaID } : item
+                    item.cageID === editingCage.cageID ? { ...item, cageName } : item
                 );
                 setCages(updatedCages);
                 message.success("Cage updated successfully.");
             } else {
                 // Create new Cage
-                const newCage = await createCage(cageName, areaID );
+                const newCage = await createCage(cageName, areaId );
                 setCages([newCage, ...cages]);
                 message.success("Cage added successfully.");
             }
@@ -104,6 +120,9 @@ const CageManagement = () => {
             title: "Cage Name",
             dataIndex: "cageName",
             key: "cageName",
+            render: (text, record) => (
+                <Link to={`/histories/${record.cageID}`}>{text}</Link> // Điều hướng tới HistoryManagement
+            ),
         },
         {
             title: "Area",
@@ -161,6 +180,7 @@ const CageManagement = () => {
                     >
                         <Input />
                     </Form.Item>
+                    {!areaId && (
                     <Form.Item
                         name="areaID"
                         label="Area"
@@ -174,10 +194,12 @@ const CageManagement = () => {
                             ))}
                         </Select>
                     </Form.Item>
+                       )}
                 </Form>
+                        
             </Modal>
 
-            <Table dataSource={cages} columns={columns} rowKey="cageID" pagination={{ pageSize: 7 }} />
+            <Table dataSource={areaId ? cagesByAreId : cages} columns={columns} rowKey="cageID" pagination={{ pageSize: 7 }} />
         </div>
     );
 };

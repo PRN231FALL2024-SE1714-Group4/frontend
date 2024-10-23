@@ -8,11 +8,15 @@ import { createHistory, deleteHistory, getHistory } from "../../../../services/a
 
 import { getAnimal, updateAnimal } from "../../../../services/api/Animal";
 import { getCage } from "../../../../services/api/CageApi";
+import { useParams } from "react-router-dom";
 
 const HistoryManagement = () => {
+    const { cageId } = useParams(); // Lấy areaId từ params
     const [histories, setHistories] = useState([]);
     const [cages, setCages] = useState([]);
     const [animals, setAnimals] = useState([]);
+    const [animalsById, setAnimalByCageId] = useState([]);
+    
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingHistory, setEditingHistory] = useState(null);
     const [form] = Form.useForm();
@@ -25,14 +29,29 @@ const HistoryManagement = () => {
     const formattedFromDate = fromDate ? moment(fromDate).format("YYYY-MM-DD") : null;
     const formattedToDate = toDate ? moment(toDate).format("YYYY-MM-DD") : null;
 
-
-
+    useEffect(() => {
+        fetchHistoriesById();
+    }, [cageId]);
+  
     useEffect(() => {
         fetchHistory();
         fetchAnimal();
         fetchCage();
     }, []);
 
+
+
+    const fetchHistoriesById = async () => {
+        try {
+            const response = await getHistory();
+            console.log(response); // Kiểm tra dữ liệu phản hồi
+           const filteredHistories  = response.filter(history => history.cageID === cageId);
+           console.log("check filter: ",filteredHistories )
+           setAnimalByCageId(filteredHistories);
+        } catch (error) {
+            message.error("Failed to fetch HistoryById data.");
+        }
+    };
     const fetchHistory = async () => {
         try {
             const response = await getHistory();
@@ -78,6 +97,7 @@ const HistoryManagement = () => {
     const handleAdd = () => {
         setEditingHistory(null);
         setIsModalVisible(true);
+        form.setFieldsValue({ cageID: cageId });
     };
 
     const handleOk = async () => {
@@ -85,14 +105,14 @@ const HistoryManagement = () => {
 
             
             const values = await form.validateFields();
-            const { animalID, cageID, description, status, fromDate, toDate } = values;    
+            const { animalID, cageID, description, fromDate, toDate } = values;    
             const formattedFromDate = fromDate ? moment(fromDate).format("YYYY-MM-DD") : null;
             const formattedToDate = toDate ? moment(toDate).format("YYYY-MM-DD") : null;
             const historyData = {
                 animalID,
                 cageID,
                 description,
-                status,
+               
                 fromDate: formattedFromDate,
                 toDate: formattedToDate
             };
@@ -209,7 +229,7 @@ const HistoryManagement = () => {
             title: "To Date",
             dataIndex: "toDate",
             key: "toDate",
-            render: (text) => moment(text).format("YYYY-MM-DD"),
+            render: (text) => text? moment(text).format("YYYY-MM-DD") : "",
         },
         {
             title: "Action",
@@ -240,7 +260,7 @@ const HistoryManagement = () => {
         <div>
             <Space style={{ margin: 15 }}>
                 <Button type="primary" onClick={handleAdd}>
-                    Add History
+                    Add Animal
                 </Button>
             </Space>
             <Modal
@@ -265,6 +285,7 @@ const HistoryManagement = () => {
                             ))}
                         </Select>
                     </Form.Item>
+                    {!cageId && (
                     <Form.Item
                         name="cageID"
                         label="Cage"
@@ -279,6 +300,8 @@ const HistoryManagement = () => {
                              </Select>
 
                     </Form.Item>
+                )}
+
                     <Form.Item
                         name="description"
                         label="Description"
@@ -286,13 +309,7 @@ const HistoryManagement = () => {
                     >
                         <Input />
                     </Form.Item>
-                    <Form.Item
-                        name="status"
-                        label="Status"
-                        rules={[{ required: true, message: "Please input the status!" }]}
-                    >
-                        <Input />
-                    </Form.Item>
+               
                     <Form.Item
                         name="fromDate"
                         label="From Date"
@@ -304,14 +321,14 @@ const HistoryManagement = () => {
                     <Form.Item
                         name="toDate"
                         label="To Date"
-                        rules={[{ required: true, message: "Please choose the to date!" }]}
+                        
                     >
                         <DatePicker onChange={(date) => setToDate(date)} />
                     </Form.Item>
                 </Form>
             </Modal>
             <Table
-                dataSource={histories}
+                dataSource={cageId ? animalsById : histories }
                 columns={columns}
                 rowKey="historyID"
                 pagination={{ pageSize: 7 }}

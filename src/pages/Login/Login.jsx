@@ -52,7 +52,7 @@ export const Login = () => {
             </Flex>
             <div className="w-[100vw] h-[100vh] flex justify-center items-center relative overflow-hidden">
                 <img
-                    src="https://agritech.tnau.ac.in/animal_husbandry/images/Boar%20n%20Sows.jpg"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQFqsKMp9UidTH6xwuT2WUc3WKYKQEqUQyD0w&s"
                     className="absolute top-0 left-0 z-1 w-full h-screen"
                 />
                 <Flex gap={20} className="relative bg-white rounded">

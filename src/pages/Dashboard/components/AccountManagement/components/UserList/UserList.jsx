@@ -63,6 +63,7 @@ const UserManagement = () => {
             key: "roleName",
             filters: rolesData?.map((role) => ({ text: role.name, value: role.name })) || [],
             onFilter: (value, record) => record.role?.name === value,
+            
         },
 
         {
@@ -170,7 +171,9 @@ const UserManagement = () => {
     const handleAdd = async () => {
         setIsAddModalVisible(true);
     };
-    const dataSource = Array.isArray(userData.users) ? userData.users : [];
+    const dataSource = Array.isArray(userData.users)
+    ? userData.users.filter(user => user.role?.name !== "ADMIN") // Filter out users with role ADMIN
+    : [];
 
     return (
         <div>

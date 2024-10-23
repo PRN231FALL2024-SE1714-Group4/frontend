@@ -285,7 +285,7 @@ const [editingReport, setEditingReport] = useState(null);
             key: "startDate",
             render: (text) =>  
              <Tag bordered={false} color="orange">
-                 {moment(text).format("YYYY-MM-DD HH:mm")}
+                 {dayjs(text).format("YYYY-MM-DD HH:mm:ss")}
              </Tag>
         },
         
@@ -308,16 +308,7 @@ const [editingReport, setEditingReport] = useState(null);
                 </Tag>
             ),
         },
-        {
-            title: "Assignee",
-            dataIndex: ["assignee","fullName"],
-            key: "assignee",
-            render: (assignee) => (
-                <Tag bordered={true} color="purple">
-                    {assignee}
-                </Tag>
-            ),
-        },        
+        
         {
             title: "Status",
             dataIndex: ["status"],
@@ -392,14 +383,14 @@ const [editingReport, setEditingReport] = useState(null);
                     rules={[{ required: true, message: "Please select startDate!" }]}
                     >
                         <DatePicker onChange={(date) => setStartDate(date)} 
-                             format="YYYY-MM-DD"/>
+                             format="YYYY-MM-DD HH:mm"/>
                     </Form.Item>
                     <Form.Item
                     name = "endDate"
                     label = "End Date"
                     rules={[{ required: true, message: "Please select endDate!" }]}
                     >
-                        <DatePicker onChange={(date) => setEndDate(date)}  format="YYYY-MM-DD"/>
+                        <DatePicker onChange={(date) => setEndDate(date)}  format="YYYY-MM-DD HH:mm"/>
                     </Form.Item>
                     <Form.Item
                         name = "shift"
