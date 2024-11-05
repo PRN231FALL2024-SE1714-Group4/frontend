@@ -198,15 +198,16 @@ const UserManagement = () => {
                         <Input.Password />
                     </Form.Item>
                     <Form.Item label="Role" name="roleID" rules={[{ required: true, message: "Please select a role!" }]}>
-                        <Select placeholder="Select a role">
-                            {rolesData.map((role) => (
-                                <Option key={role.roleID} value={role.roleID}>
-                                    {role.name}
-                                </Option>
-                            ))}
-                            
-                        </Select>
-                    </Form.Item>
+    <Select placeholder="Select a role">
+        {rolesData
+            .filter((role) => role.name !== "ADMIN") // Exclude the "ADMIN" role
+            .map((role) => (
+                <Option key={role.roleID} value={role.roleID}>
+                    {role.name}
+                </Option>
+            ))}
+    </Select>
+</Form.Item>
                     <Form.Item label="Phone Number" name="phone">
                         <Input />
                     </Form.Item>
@@ -229,58 +230,8 @@ const UserManagement = () => {
                     </Form.Item>
                 </Form>
             </Modal>
- {/* Edit User Modal */}
-            {selectedUser && (
-                <Modal title="Edit Account" visible={isEditModalVisible} onCancel={() => handleEditModalCancel()} footer={null}>
-                    <Form
-                        initialValues={{
-                            ...selectedUser,
-                            roleId: selectedUser.role_id ? selectedUser.role_id.id : null,
-                            date_of_birth: selectedUser.dateOfBirth ? dayjs(selectedUser.dateOfBirth) : null,
-                        }}
-                        onFinish={handleSaveEdit}
-                    >
-                        <Form.Item label="Name" name="fullName">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="Email" name="email">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="Password" name="password">
-                            <Input.Password />
-                        </Form.Item>
-                        <Form.Item label="Role" name="roleId">
-                            <Select placeholder="Select a role">
-                                {rolesData.map((role) => (
-                                    <Option key={role.roleID} value={role.roleID}>
-                                        {role.name}
-                                    </Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                        <Form.Item label="Phone Number" name="phone">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="Address" name="address">
-                            <Input />
-                        </Form.Item>
-                        <Form.Item label="Date of Birth" name="dateOfBirth">
-                            <DatePicker format="YYYY-MM-DD" />
-                        </Form.Item>
-                        <Form.Item label="Status" name="status">
-                            <Select>
-                                <Option value={true}>Active</Option>
-                                <Option value={false}>Banned</Option>
-                            </Select>
-                        </Form.Item>
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit">
-                                Save
-                            </Button>
-                        </Form.Item>
-                    </Form>
-                </Modal>
-            )}
+
+            
         </div>
     );
 };

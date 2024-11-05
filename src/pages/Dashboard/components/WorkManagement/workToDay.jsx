@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm, DatePicker, Tag } from "antd";
 import moment from "moment";
 
-import { addWork,deleteWork,getAvailableUsers,getMyAssignedTask,getMyWork,getWork, updateWork } from "../../../../services/api/WorkApi";
+import { addWork,deleteWork,getAvailableUsers,getMyAssignedTask,getMyWork,getMyWorkToday,getWork, updateWork } from "../../../../services/api/WorkApi";
 import {  getCage } from "../../../../services/api/CageApi";
 import { getAllUsers } from "../../../../services/api/UserApi";
 import TextArea from "antd/es/input/TextArea";
@@ -10,10 +10,10 @@ import { useSelector } from "react-redux";
 import { addReport, getReport, updateReport } from "../../../../services/api/ReportApi";
 import { Link } from "react-router-dom";
 import dayjs from "dayjs";
-import { data } from "autoprefixer";
+
 const { Option } = Select;
 
-const WorkManagement = () => {
+const WorkTodayManagement = () => {
     const [users, setUsers] = useState([]);
     const [works, setWorks] = useState([]);
     const [myWorks, setMyWorks] = useState([]);
@@ -28,25 +28,16 @@ const WorkManagement = () => {
     const [endDate, setEndDate] = useState(null);
     const [shift, setShift] = useState(null);
     const [assignee, setAssignee] = useState(null);
-
+    const [myWorkToday, setMyWorkToday] = useState([]);
 const [editingReport, setEditingReport] = useState(null);
 
     const [form] = Form.useForm();
     const role = useSelector((state) => state.auth.role);
-    const dataSource = role === "STAFF"
-    ? myWorks
-    : role === "MANAGER"
-    ? myAssignedTask
-    : works;
+    
     useEffect(() => {
-        fetchWorks();
+        fetchMyWorkToday();
         fetchCages();
         fetchUsers();
-        if(role === "STAFF") {
-            fetchMyWorks();
-        } else if (role === "MANAGER") {
-            fetchMyAssignedTask();
-        }
     }, []);
   const fetchUsers = async () => {
         try {
@@ -89,12 +80,14 @@ const [editingReport, setEditingReport] = useState(null);
             message.error("Failed to fetch Cages data.");
         }
     };
-    const fetchMyWorks = async () => {
+    
+    const fetchMyWorkToday = async () => {
         try {
-            const response = await getMyWork ();
-            setMyWorks(response); 
+            const response = await getMyWorkToday();
+            console.log("check response:" , response);
+            setMyWorkToday(response); 
         } catch (error) {
-            message.error("Failed to fetch Works data.");
+            message.error("Failed to fetchMyWorkToday data.");
         }
     };
     const fetchMyAssignedTask = async () => {
@@ -212,7 +205,7 @@ const [editingReport, setEditingReport] = useState(null);
             setIsReportModalVisible(false);
             form.resetFields();
             // fetchReports();
-            fetchMyWorks();
+            fetchMyWorkToday();
         } catch (error) {
             message.error("Validation failed: " + error.message);
         }
@@ -286,37 +279,37 @@ const [editingReport, setEditingReport] = useState(null);
                 </Tag>
             ),
         },
-        {
-            title: "Assignee",
-            dataIndex: ["assignee","fullName"],
-            key: "assignee",
-            render: (assignee) => (
-                <Tag bordered={true} color="blue">
-                    {assignee}
-                </Tag>
-            ),
-        },
-        {
-            title: "Start Date",
-            dataIndex: "startDate",
-            key: "startDate",
-            render: (text) =>  
-             <Tag bordered={false} color="orange">
-                 {dayjs(text).format("YYYY-MM-DD HH:mm:ss")}
-             </Tag>,
-               sorter: (a, b) => new Date(a.startDate) - new Date(b.startDate),  // Sort by startDate
-        },
+        // {
+        //     title: "Assignee",
+        //     dataIndex: ["assignee","fullName"],
+        //     key: "assignee",
+        //     render: (assignee) => (
+        //         <Tag bordered={true} color="blue">
+        //             {assignee}
+        //         </Tag>
+        //     ),
+        // },
+        // {
+        //     title: "Start Date",
+        //     dataIndex: "startDate",
+        //     key: "startDate",
+        //     render: (text) =>  
+        //      <Tag bordered={false} color="orange">
+        //          {dayjs(text).format("YYYY-MM-DD HH:mm:ss")}
+        //      </Tag>,
+        //        sorter: (a, b) => new Date(a.startDate) - new Date(b.startDate),  // Sort by startDate
+        // },
         
-        {
-            title: "End Date",
-            dataIndex: "endDate",
-            key: "endDate",
-            render: (text) => 
-            <Tag bordered={false} color="gold">
-                  {moment(text).format("YYYY-MM-DD HH:mm")}
-            </Tag> ,
-              sorter: (a, b) => new Date(a.endDate) - new Date(b.endDate),  // Sort by startDate
-        },
+        // {
+        //     title: "End Date",
+        //     dataIndex: "endDate",
+        //     key: "endDate",
+        //     render: (text) => 
+        //     <Tag bordered={false} color="gold">
+        //           {moment(text).format("YYYY-MM-DD HH:mm")}
+        //     </Tag> ,
+        //       sorter: (a, b) => new Date(a.endDate) - new Date(b.endDate),  // Sort by startDate
+        // },
         {
             title: "Description",
             dataIndex: "description",
@@ -345,16 +338,16 @@ const [editingReport, setEditingReport] = useState(null);
                 <Space size="middle">
                {role === "STAFF" && (
                     <>
-                        {/* {record.hasReport ? (
+                        {record.hasReport ? (
                             <Button type="primary" onClick={() => handleEditReport(record)}>Edit Report</Button>
                         ) : (
                             <Button 
                             color="primary" variant="outlined"
                                 onClick={() => handleWriteReport(record)}
-                                 >
+                                >
                                 Write Report
                             </Button>
-                        )} */}
+                        )}
                     </>
                 )}
                     {role !== "STAFF" && (
@@ -539,9 +532,9 @@ const [editingReport, setEditingReport] = useState(null);
         </Form.Item>
     </Form>
 </Modal>
-            <Table dataSource={dataSource} columns={columns} rowKey="workId" pagination={{ pageSize: 10 }} />
+            <Table dataSource={myWorkToday} columns={columns} rowKey="workId" pagination={{ pageSize: 10 }} />
         </div>
     );
 };
 
-export default WorkManagement;
+export default WorkTodayManagement;

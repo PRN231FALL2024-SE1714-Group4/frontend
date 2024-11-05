@@ -10,19 +10,20 @@ import { useSelector } from "react-redux";
 
 
 
-const HealthReportManagement = () => {
+const CageNeedToReport = () => {
     const [healths, setHealths] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isModalReportVisible, setIsModalReportVisible] = useState(false);
     const [cages, setCages] = useState([]); 
-   
+    const [cageNeedtoReport, setCageNeedToReport] = useState([]); 
     const [editingHealth, setEditingHealth] = useState(null);
     const [form] = Form.useForm();
     const role = useSelector((state) => state.auth.role);
     const [selectedCageID, setSelectedCageID] = useState(null); // Add state for selected cage ID
+    const [selectedDateTime, setSelectedDateTime] = useState(null); // Add state for selected cage ID
     useEffect(() => {
         // fetchHealths();
-        fetchHealths();
+        fetchCageNeedToReport();
         fetchCages();
     }, []);
 
@@ -35,20 +36,25 @@ const HealthReportManagement = () => {
             message.error("Failed to fetch Cages data");
         }
     }
- 
-    const fetchHealths = async () => {
-        try {
-            const response = await getHealth();
-            setHealths(response); // Set healths data into state
-        } catch (error) {
-            message.error("Failed to fetch healths data.");
+    const fetchCageNeedToReport = async () => {
+        try { 
+            const response = await getHealthReport() ; 
+            console.log("Fetched Health Reports:", response);
+            setCageNeedToReport(response); 
+        }catch (error) { 
+            message.warning("không có cage cần report");
         }
-    };
+    }
 
-    const handleAdd = (cageID) => {
+
+    const handleAdd = (cageID,dateTime) => {
+        console.log("Selected Cage ID:", cageID); // Debugging line
+        setSelectedCageID(cageID); // Set selected cage ID
+        setSelectedDateTime(dateTime);
         setEditingHealth(null);
         form.resetFields();
-       
+        form.setFieldsValue({ cageID }); // Set the cageID in the form
+        console.log("Form Values after setting cageID:", form.getFieldsValue()); 
         setIsModalVisible(true);
     };
 
@@ -56,7 +62,8 @@ const HealthReportManagement = () => {
         try {
             const formattedValues = {
                 ...values,
-                dateTime: values.dateTime ? values.dateTime.format("YYYY-MM-DD") : null,
+                cageID: role === "STAFF" ? selectedCageID : values.cageID, // Use selected cage ID for staff
+                dateTime: role === "STAFF" ? selectedDateTime: values.dateTime.format("YYYY-MM-DD"),
             };
             console.log("formatted value: ", formattedValues);
             const newAnimal = await addHealthReport(formattedValues);
@@ -64,7 +71,7 @@ const HealthReportManagement = () => {
             message.success("Health Report added successfully.");
             setIsModalVisible(false);
             form.resetFields();
-            // fetchHealths();
+            fetchCageNeedToReport();
         } catch (error) {
             message.error("Validation failed: " + error.message);
         }
@@ -77,26 +84,9 @@ const HealthReportManagement = () => {
         form.resetFields();
     };
 
-    const handleEdit = (record) => {
-        setEditingHealth(record);
-        setIsModalVisible(true);
-        form.setFieldsValue({
-            ...record,
-            dateTime: record.dateTime ? moment(record.dateTime) : null, // Convert to moment object
-        });
-    };
     
 
-    const handleDelete = async (id) => {
-        try {
-            // Delete area by id from API (implement deleteArea function)
-            await deleteHealthReport(id);
-            setHealths(healths.filter((item) => item.helthReportID !== id));
-            message.success("Health report deleted successfully.");
-        } catch (error) {
-            message.error("Failed to delete health report.");
-        }
-    };
+
     const columns = [
         {
             title: "No",
@@ -105,12 +95,9 @@ const HealthReportManagement = () => {
         },
         {
             title: "Cage",
-            dataIndex: "cageID",
+            dataIndex: ["cage","cageName"],
             key: "cageID",
-            render: (cageID) => {
-                const cage = cages.find(cage => cage.cageID === cageID);
-                return cage ? cage.cageName : "Unknown";
-            }
+        
         },
         {
             title: "Description",
@@ -139,69 +126,32 @@ const HealthReportManagement = () => {
             key: "action",
             dataIndex:"cage",
             render: (_, record) => (
-          
-                <Space size="middle">
-                    <Button type="primary" onClick={() => handleEdit(record)}>
-                        Edit
-                    </Button>
-                    <Popconfirm
-                        title="Are you sure to delete Health Report?"
-                        onConfirm={() => handleDelete(record.animalID)}
-                        okText="Yes"
-                        cancelText="No"
-                    >
-                        <Button type="primary" danger>
-                            Delete
-                        </Button>
-                    </Popconfirm>
-                </Space>
+                <Button type = "default" onClick={() => handleAdd(record.cage.cageID, record.dateTime) }>  
+                    Write Report 
+                </Button>
+               
             ) 
         },
     ];
 
     return (
         <div>
-            { <Space style={{ margin: 15 }}>
-                <Button type="primary" onClick={handleAdd}>
-                    Add Health Report
-                </Button>
-            </Space>}
+      
             <Modal
-                title={editingHealth ? "Edit Health Report" : "Add Health Report"}
+                title={ "Add Health Report"}
                 open={isModalVisible}
                 onOk={() => form.submit()}
                 onCancel={handleCancel}
             >
                 <Form onFinish={handleOk} form={form} layout="vertical">
-                    { (
-                        <Form.Item
-                            name="cageID"
-                            label="Cage"
-                            rules={[{ required: true, message: "Please select the cage!" }]}
-                        >
-                            <Select placeholder="Select a cage">
-                                {cages.map((cage) => (
-                                    <Select.Option key={cage.cageID} value={cage.cageID}>
-                                        {cage.cageName}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
-                    )}
-              
+            
+                    {/* If role is staff, the cageID will be set automatically and not shown in the form */}
                     <Form.Item
                         name="description"
                         label="Description"
-                        rules={[{ required: true, message: "Please enter the description!" }]}
+                  
                     >
                         <TextArea />
-                    </Form.Item>
-                    <Form.Item
-                        name="dateTime"
-                        label="Date Time"
-                        rules={[{ required: true, message: "Please input the dateTime!" }]}
-                    >
-                        <DatePicker />
                     </Form.Item>
                     <Form.Item
                         name="status"
@@ -217,7 +167,7 @@ const HealthReportManagement = () => {
                 </Form>
             </Modal>
             <Table
-                dataSource={healths}
+                dataSource={cageNeedtoReport}
                 columns={columns}
                 rowKey="helthReportID"
                 pagination={{ pageSize: 7 }}
@@ -226,4 +176,4 @@ const HealthReportManagement = () => {
     );
 };
 
-export default HealthReportManagement;
+export default CageNeedToReport;

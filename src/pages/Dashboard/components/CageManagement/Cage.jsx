@@ -3,7 +3,8 @@ import { Table, Button, Modal, Form, Input, message, Space, Select, Popconfirm }
 import moment from "moment";
 import { getArea } from '/src/services/api/AreaApi.js';
 import { createCage, getCage, deleteCage, updateCage } from '/src/services/api/CageApi.js';
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 const { Option } = Select;
 
 const CageManagement = () => {
@@ -14,7 +15,9 @@ const CageManagement = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingCage, setEditingCage] = useState(null);
     const [form] = Form.useForm();
-
+   
+    const role = useSelector((state) => state.auth.role);
+    const navigate = useNavigate();
     useEffect(() => {
         fetchCagesById();
     }, [areaId]);
@@ -109,7 +112,9 @@ const CageManagement = () => {
         setIsModalVisible(false);
         form.resetFields();
     };
-
+    const handleViewPig = (cageID) =>{ 
+        navigate(`histories/${cageID}`);
+    }
     const columns = [
         {
             title: "No",
@@ -138,7 +143,7 @@ const CageManagement = () => {
         {
             title: "Action",
             key: "action",
-            render: (_, record) => (
+            render: (_, record) => role === "MANAGER"?  (
                 <Space size="middle">
                     <Button type="primary" onClick={() => handleEdit(record)}>
                         Edit
@@ -154,17 +159,20 @@ const CageManagement = () => {
                         </Button>
                     </Popconfirm>
                 </Space>
-            ),
+            ) : <Button type = "primary" onClick={() => navigate(`/histories/${record.cageID}`)}>
+                View Pig In Cage
+            </Button>,
         },
     ];
 
     return (
         <div>
+             {role === "MANAGER" && (
             <Space style={{ margin: 15 }}>
                 <Button type="primary" onClick={handleAdd}>
                     Add Cage
                 </Button>
-            </Space>
+            </Space> )}
 
             <Modal
                 title={editingCage ? "Edit Cage" : "Add Cage"}

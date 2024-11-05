@@ -34,14 +34,14 @@ export const deleteReport = async (id) => {
 export const addReport = async (
     workId,
     description,
-    healthDescription,
+    workStatus
     
 ) => {
     try {
         const response = await api.post(`Report`, {
             workId,
             description,
-            healthDescription,
+            workStatus
         });
         return response.data;
     } catch (error) {

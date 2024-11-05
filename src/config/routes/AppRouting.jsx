@@ -20,6 +20,10 @@ import ShiftManagement from "../../pages/Dashboard/components/ShiftManagement/sh
 import AnimalManagement from "../../pages/Dashboard/components/AnimalManagement/Animal";
 import HistoryManagement from "../../pages/Dashboard/components/HistoryManagement/History";
 import HealthReportManagement from "../../pages/Dashboard/components/HealthReportManagement/HealthReport";
+import CageNeedToReport from "../../pages/Dashboard/components/HealthReportManagement/CageNeedToReport";
+import MyCageHealthReport from "../../pages/Dashboard/components/HealthReportManagement/MyCageHealthReport";
+import AuthCallback from "../../pages/Login/AuthCallback ";
+import WorkTodayManagement from "../../pages/Dashboard/components/WorkManagement/workToDay";
 
 
 
@@ -29,7 +33,7 @@ const AppRouting = () => {
     return (
         <Routes>
             <Route path="/login" element={<Login />} />
-
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route exact path="/" element={<ProtectedRoute element={<Dashboard />} />}>
                 <Route path="users" element={<UserManagement />} />
                 <Route path="staffs" element={<StaffManagement />} />
@@ -38,12 +42,16 @@ const AppRouting = () => {
                     <Route path="areas" element={<AreaManagement />} />
                     <Route path="cages/:areaId" element={<CageManagement />} />
                     <Route path="histories/:cageId" element={<HistoryManagement />} />
+                    <Route path="healths/:cageId" element={<HealthReportManagement />} />
                 </Route>
              
                 <Route>
                      <Route path="works" element={<WorkManagement />} />
                      <Route path="report-detail/:workId" element={<ReportDetail />} />
                 </Route>
+                     
+                <Route path="task-today" element={<WorkTodayManagement />} />                       
+                <Route path="all-task" element={<WorkManagement />} />
                 <Route path="reports" element={<ReportManagement />} />
                 <Route path="shifts" element={<ShiftManagement />} />
                  
@@ -51,6 +59,10 @@ const AppRouting = () => {
                 <Route path="animals" element={<AnimalManagement />} />
                 <Route path="histories" element={<HistoryManagement />} />
                 <Route path="healths" element={<HealthReportManagement />} />
+                <Route path="cageNeedToReport" element={<CageNeedToReport />} />
+                <Route path="myReport" element={<MyCageHealthReport />} />
+                
+                
             </Route>
         </Routes>
     );

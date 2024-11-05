@@ -33,6 +33,7 @@ export const AppLayout = ({ components }) => {
 
        
         const items = [
+          
             ...(role === "ADMIN"
                 ? [
                       // Chỉ thêm Account Management nếu role là ADMIN
@@ -49,25 +50,17 @@ export const AppLayout = ({ components }) => {
                           label: <Link to="/areas">Area Management</Link>,
                       },
                       {
-                        key: "3", 
+                        key: "1", 
                         icon: <ShoppingOutlined/>, 
-                        label: <Link to ="/histories">History Management</Link>
+                        label: <Link to ="/works">Work Management</Link>
                     },
                       {
                           key: "5",
                           icon: <ShoppingOutlined />,
                           label: <Link to="/cages">Cage Management</Link>,
                       },
-                      {
-                        key: "6",
-                        icon: <ShoppingOutlined />,
-                        label: <Link to="/works">Work Management</Link>,
-                    },             
-                    {
-                        key: "7",
-                        icon: <ShoppingOutlined />,
-                        label: <Link to="/healths">Health Report</Link>,
-                    },         
+                         
+                          
                   ]),
          
             ...(role === "MANAGER"
@@ -86,7 +79,13 @@ export const AppLayout = ({ components }) => {
                         key: "10", 
                         icon: <ShoppingOutlined/>, 
                         label: <Link to ="/animals">Animal Management</Link>
-                    },   
+                    },
+                    {
+                            key: "3", 
+                            icon: <ShoppingOutlined/>, 
+                            label: <Link to ="/histories">Cage's Pig Management</Link>
+                        },   
+                    
                     {
                         key: "11",
                         icon: <ShoppingOutlined />,
@@ -97,21 +96,30 @@ export const AppLayout = ({ components }) => {
                 : []), // Nếu role là ADMIN thì thêm mục Report Management
                 ...( role === "STAFF"
                     ? [
-                        
+                        getItem("Task Management", "sub1", <ShoppingOutlined />, [
+                            getItem("Task Today", "20", <Link to="/task-today"></Link>),
+                            getItem("All Task", "2", <Link to="/all-task"></Link>),
+                        ]),
                         {
                             key: "15", 
                             icon: <ShoppingOutlined/>, 
                             label: <Link to ="/shifts">Shifts Management</Link>
                         },
-                        {
-                            key: "16", 
-                            icon: <ShoppingOutlined/>, 
-                            label: <Link to ="/animals">Animal Management</Link>
-                        },
+                        // {
+                        //     key: "16", 
+                        //     icon: <ShoppingOutlined/>, 
+                        //     label: <Link to ="/animals">Animal Management</Link>
+                        // },
+                        
                         {
                             key: "17",
                             icon: <ShoppingOutlined />,
-                            label: <Link to="/healths">Health Report</Link>,
+                            label: <Link to="/cageNeedToReport">Cage's Health Report</Link>,
+                        }, 
+                        {
+                            key: "18",
+                            icon: <ShoppingOutlined />,
+                            label: <Link to="/myReport">My Cage's Health Report</Link>,
                         }, 
                
                     ]

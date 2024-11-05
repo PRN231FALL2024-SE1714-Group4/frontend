@@ -99,16 +99,16 @@ const ReportDetail = () => {
                 </Tag>  
             ),
         },
-        {
-            title: "Health Description",
-            dataIndex: "healthDescription",
-            key: "healthDescription",
-            render: (healthDescription) => (
-                <Tag bordered={true} color="processing">
-                    {healthDescription}
-                </Tag>  
-            ),
-        },
+        // {
+        //     title: "Health Description",
+        //     dataIndex: "healthDescription",
+        //     key: "healthDescription",
+        //     render: (healthDescription) => (
+        //         <Tag bordered={true} color="processing">
+        //             {healthDescription}
+        //         </Tag>  
+        //     ),
+        // },
 
         {
             title: "Date",
@@ -120,28 +120,28 @@ const ReportDetail = () => {
                 {moment(text).format("YYYY-MM-DD HH:mm")}
             </Tag>
         },
-        {
-            title: "Status",
-            dataIndex: "status",
-            key: "status",
-            render: (status) => (
-                <Tag bordered={true} color="orange">
-                    {status}
-                </Tag>  
-            ),
-        },
-        {
-            title: "Action",
-            key: "action",
-            render: (_, record) => (
-                <Space size="middle">
-                    <Button type="primary" onClick={() => handleEdit(record)}>
-                        Edit
-                    </Button>
+        // {
+        //     title: "Status",
+        //     dataIndex: "status",
+        //     key: "status",
+        //     render: (status) => (
+        //         <Tag bordered={true} color="orange">
+        //             {status}
+        //         </Tag>  
+        //     ),
+        // },
+        // {
+        //     title: "Action",
+        //     key: "action",
+        //     render: (_, record) => (
+        //         <Space size="middle">
+        //             <Button type="primary" onClick={() => handleEdit(record)}>
+        //                 Edit
+        //             </Button>
                    
-                </Space>
-            ),
-        },
+        //         </Space>
+        //     ),
+        // },
         
     ];
 

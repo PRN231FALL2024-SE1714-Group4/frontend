@@ -63,13 +63,13 @@ export const addWork = async (
         throw error;
     }
 };
-export const getAvailableUsers = async (fromDate,toDate,workShift) => {
+export const getAvailableUsers = async (fromDate,toDate,shift) => {
     try {
         const response = await api.get(`UserShift/available-users`, {
             params: {
                 fromDate: fromDate,
                 toDate: toDate,
-                workShift: workShift
+                workShiftEnum: shift
             }
         });
         return response.data;
@@ -93,6 +93,15 @@ export const updateWork = async (id, description, startDate, endDate, shift, ass
 export const deleteWork = async (id) => {
     try {
         const response = await api.delete(`Work/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Error updating user:", error);
+        throw error;
+    }
+};
+export const getMyWorkToday = async () => {
+    try {
+        const response = await api.get(`Work/my-work-today`);
         return response.data;
     } catch (error) {
         console.error("Error updating user:", error);

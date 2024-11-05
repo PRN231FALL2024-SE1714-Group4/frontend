@@ -4,7 +4,7 @@ import { Alert, Calendar, List, Button, Space, Checkbox, message, DatePicker, Mo
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import { getAvailableUsers, getMyShift, getWorkerInShift, registerShift } from "../../../../services/api/ShiftApi";
+import { getAllMyShift, getAllShift, getAvailableUsers, getMyShift, getWorkerInShift, registerShift } from "../../../../services/api/ShiftApi";
 import { useSelector } from "react-redux";
 
 dayjs.extend(isSameOrAfter);
@@ -15,7 +15,8 @@ const ShiftManagement = () => {
   const [workerInShiftsMonth, setWorkerInShiftsMonth] = useState([]);
   const [availableWorker, setAvailableWorker] = useState([]);
   const [myShift, setMyShift] = useState([]);
-  
+  const [allShift, setAllShift] = useState([]);
+  const [allMyShift, setAllMyShift] = useState([]);
   const [value, setValue] = useState(dayjs());
   const [selectedValue, setSelectedValue] = useState(dayjs());
   const [selectedWorkShift, setSelectedWorkShift] = useState(""); 
@@ -39,7 +40,7 @@ const ShiftManagement = () => {
     setStartDate(startOfMonth);
     setEndDate(endOfMonth);
     if(role === "STAFF") {
-      fetchMyShift(startOfMonth.format('YYYY-MM-DD'), endOfMonth.format('YYYY-MM-DD'));
+      fetchAllMyShift();
     }
     else {
       setStartDate(startOfMonth);
@@ -47,6 +48,17 @@ const ShiftManagement = () => {
       fetchWorkerInShift(startOfMonth.format('YYYY-MM-DD'), endOfMonth.format('YYYY-MM-DD'))
     }
   }, []);
+
+
+  const fetchAllShift = async () => { 
+    try { 
+      const response = await getAllShift(); 
+      setAllShift(response); 
+    } catch (error) { 
+      message.error("Failed to fetch available worker data");
+    }
+  };
+
   const fetchAvailAbleWorker = async () => { 
     try { 
       const response = await getAvailableUsers(); 
@@ -60,6 +72,14 @@ const ShiftManagement = () => {
     try {
       const response = await getMyShift(start, end);
       setMyShift(response);
+    } catch (error) {
+      message.error("No shifts found for the specified date range.");
+    }
+  };
+  const fetchAllMyShift = async () => {
+    try {
+      const response = await getAllMyShift();
+      setAllMyShift(response);
     } catch (error) {
       message.error("No shifts found for the specified date range.");
     }
@@ -118,34 +138,78 @@ const ShiftManagement = () => {
       const startOfWeek = selectedValue.startOf('week'); // Gets the Monday of the selected week
       const endOfWeek = startOfWeek.add(6, 'day'); // Gets the Sunday of that week
       const startOfMonth = selectedValue.startOf('month'); // Gets the Monday of the selected week
-      const endOfMonth = startOfWeek.add(31, 'month'); // Gets the Sunday of that week
-      await fetchMyShift(startOfWeek.format('YYYY-MM-DD'), endOfWeek.format('YYYY-MM-DD'));
+      const endOfMonth = startOfMonth.add(100, 'month'); // Gets the Sunday of that week
+      await fetchAllMyShift();
 
       setSelectedWorkShift(""); // Reset selection if needed
     } catch (error) {
       message.error("Failed to register shift - Duplicated Shift!");
     }
   };
+  // const handleRegisterByTimePeriod = async () => {
+  //   if (!registerWorkShift || !registerStartDate || !registerEndDate) {
+  //     message.warning("Please select all fields.");
+  //     return;
+  //   }
+
+  //   const data = [{
+  //     workShift: registerWorkShift,
+  //     startDate: registerStartDate.format('YYYY-MM-DD'),
+  //     endDate: registerEndDate.format('YYYY-MM-DD'),
+  //   }];
+
+  //   try {
+  //     await registerShift(data);
+  //     message.success("Shift registered successfully by time period.");
+  //     setIsRegisterModalVisible(false);
+  //     fetchMyShift(data.startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'));
+  //   } catch (error) {
+  //     message.error("Failed to register shift by time period.");
+  //   }
+  // };
   const handleRegisterByTimePeriod = async () => {
     if (!registerWorkShift || !registerStartDate || !registerEndDate) {
       message.warning("Please select all fields.");
       return;
     }
-
-    const data = [{
-      workShift: registerWorkShift,
-      startDate: registerStartDate.format('YYYY-MM-DD'),
-      endDate: registerEndDate.format('YYYY-MM-DD'),
-    }];
-
+  
+    // Create a copy of start and end date to loop through each day
+    let current = registerStartDate.clone();
+    const lastDate = registerEndDate.clone();
+    
+    const promises = [];
+  
+    while (current.isSameOrBefore(lastDate, 'day')) {
+      const data = {
+        workShift: registerWorkShift,
+        startDate: current.format('YYYY-MM-DD'),
+        endDate: current.format('YYYY-MM-DD'),
+      };
+  
+      // Add each registration to the promise array to be executed
+      promises.push(registerShift([data]));
+      
+      // Increment to the next day
+      current = current.add(1, 'day');
+    }
+  
     try {
-      await registerShift(data);
-      message.success("Shift registered successfully by time period.");
+      // Wait for all promises to resolve
+      await Promise.all(promises);
+      message.success("Shifts registered successfully by time period.");
+  
+      // Close the modal
       setIsRegisterModalVisible(false);
+  
+      // Fetch updated shifts after registration
+      fetchAllMyShift();
     } catch (error) {
-      message.error("Failed to register shift by time period.");
+      message.warning("Duplicate shift, please check your calendar! ");
+      setIsRegisterModalVisible(false);
+      fetchAllMyShift();
     }
   };
+  
   const showModal = () => {
     setIsModalVisible(true);
   };
@@ -159,7 +223,7 @@ const ShiftManagement = () => {
         await fetchWorkerInShift(startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'));
     } else {
         // Fetch the user's own shifts if the role is not Manager
-        await fetchMyShift(startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'));
+        await fetchAllMyShift();
     }
       setIsModalVisible(false);
     } else {
@@ -176,21 +240,17 @@ const ShiftManagement = () => {
   const getShiftsForDate = (date) => {
     const dateStr = date.format('YYYY-MM-DD');
     if (role === "MANAGER") {
-      // Filter worker shifts for Managers
-      return workerInShifts.filter(shift => {
-          const shiftDate = dayjs(shift.date); // Assuming each shift has a 'shiftDate'
-          return shiftDate.isSame(dateStr, 'day');
-      });
-  } else {
-      // Filter my shifts for non-Managers
-      return myShift.filter(shift => {
-          const start = dayjs(shift.startDate);
-          const end = dayjs(shift.endDate);
-          return date.isSameOrAfter(start) && date.isSameOrBefore(end);
-      });
-  }
+      return workerInShifts.filter(shift => dayjs(shift.date).isSame(dateStr, 'day'));
+    } else {
+      return Array.isArray(allMyShift) 
+        ? allMyShift.filter(shift => {
+            const start = dayjs(shift.startDate);
+            const end = dayjs(shift.endDate);
+            return date.isSameOrAfter(start) && date.isSameOrBefore(end);
+          })
+        : []; // Return an empty array if allMyShift is not an array
+    }
   };
-
   const dateCellRender = (current) => {
     const shiftsForDate = getShiftsForDate(current);
     if (shiftsForDate.length === 0) return null;
@@ -277,12 +337,12 @@ const ShiftManagement = () => {
       >
         <Space direction="vertical" size={12}>
           <DatePicker
-            showTime
+       
             placeholder="Select Start Date"
             onChange={(date) => setStartDate(date)}
           />
           <DatePicker
-            showTime
+    
             placeholder="Select End Date"
             onChange={(date) => setEndDate(date)}
           />
@@ -297,12 +357,17 @@ const ShiftManagement = () => {
       >
         <Space direction="vertical" size={12}>
           <DatePicker
-            showTime
+            
             placeholder="Select Start Date"
+            format={{
+              format: 'YYYY-MM-DD', }}
+              
             onChange={(date) => setRegisterStartDate(date)}
           />
           <DatePicker
-            showTime
+           format={{
+            format: 'YYYY-MM-DD', }}
+           
             placeholder="Select End Date"
             onChange={(date) => setRegisterEndDate(date)}
           />
@@ -310,9 +375,9 @@ const ShiftManagement = () => {
             placeholder="Select Work Shift"
             onChange={(shift) => setRegisterWorkShift(shift)}
           >
-            <Option value="SHIFT_ONE">Shift One</Option>
-            <Option value="SHIFT_TWO">Shift Two</Option>
-            <Option value="SHIFT_THREE">Shift Three</Option>
+            <Option value="SHIFT_ONE">Shift One 6h-14h </Option>
+            <Option value="SHIFT_TWO">Shift Two 14h-22h</Option>
+            <Option value="SHIFT_THREE">Shift Three 22h-6h</Option>
           </Select>
         </Space>
       </Modal>

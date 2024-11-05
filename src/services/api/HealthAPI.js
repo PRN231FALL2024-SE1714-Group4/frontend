@@ -9,6 +9,24 @@ export const getHealth = async () => {
         throw error;
     }
 };
+export const getMyHealthReport = async () => {
+    try {
+        const response = await api.get(`HealthReport/me`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching my HealthReport:", error);
+        throw error;
+    }
+};
+export const getHealthReport = async () => {
+    try {
+        const response = await api.get(`HealthReport/cage-need-to-report`);
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching HealthReport:", error);
+        throw error;
+    }
+};
 
 export const updateHealthReport = async (id, data) => {
     try {

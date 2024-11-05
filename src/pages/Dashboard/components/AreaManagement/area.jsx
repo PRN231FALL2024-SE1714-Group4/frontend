@@ -3,12 +3,16 @@ import { Table, Button, Modal, Form, Input, message, Space, Popconfirm } from "a
 import moment from "moment";
 
 import { createArea, getArea, deleteArea, updateArea, getAreaById } from '/src/services/api/AreaApi.js';
-import { Link } from "react-router-dom";
+// import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 const AreaManagement = () => {
     const [areas, setAreas] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingArea, setEditingArea] = useState(null);
     const [form] = Form.useForm();
+    const role = useSelector((state) => state.auth.role);
+    const navigate = useNavigate();  // Define navigate at the component level
     useEffect(() => {
         fetchAreas();
     }, []);
@@ -93,6 +97,9 @@ const AreaManagement = () => {
         setIsModalVisible(false);
         form.resetFields();
     };
+    const handleViewCage = (areaID) => {
+        navigate(`/cages/${areaID}`);
+    };
 
     const columns = [
         {
@@ -119,6 +126,7 @@ const AreaManagement = () => {
             title: "Action",
             key: "action",
             render: (_, record) => (
+                role === "MANAGER" ? (
                 <Space size="middle">
                     <Button type="primary" onClick={() => handleEdit(record)}>
                         Edit
@@ -135,18 +143,20 @@ const AreaManagement = () => {
                         </Button>
                     </Popconfirm>
                 </Space>
-            ),
+             ) :   <Button type="primary" onClick={() => handleViewCage(record.areaID)}>
+             View Cage
+         </Button>
+            ), 
         },
     ];
 
     return (
         <div>
+                {role === "MANAGER" && (
                 <Space style={{ margin: 15 }}>
-                    <Button type="primary" onClick={handleAdd}>
-                        Add Areas
-                    </Button>
+                    <Button type="primary" onClick={handleAdd}>Add Area</Button>
                 </Space>
-            
+            )}
                 <Modal
                     title={editingArea ? "Edit Area" : "Add Area"}
                     visible={isModalVisible}

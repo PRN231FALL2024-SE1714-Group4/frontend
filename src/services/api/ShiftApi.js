@@ -1,7 +1,24 @@
 
 import api from "../../config/axios";
 
-
+const getAllShift = async () => { 
+    try { 
+        const response = await api.get(`UserShift/get-all`)
+        return response.data; 
+    } catch(error) { 
+        console.log(error); 
+        throw error;
+    }
+};
+const getAllMyShift = async () => { 
+    try { 
+        const response = await api.get(`UserShift/get-all/me`)
+        return response.data; 
+    } catch(error) { 
+        console.log(error); 
+        throw error;
+    }
+};
 const getWorkerInShift = async (fromDate,toDate) => {
     try {
         const response = await api.get(`UserShift/workers-in-shift`, {
@@ -57,7 +74,7 @@ const registerShift = async (data) => {
     }
 };
 
-export { registerShift, getWorkerInShift,getAvailableUsers,getMyShift};
+export { registerShift, getWorkerInShift, getAvailableUsers, getMyShift, getAllShift, getAllMyShift};
 
 
 
